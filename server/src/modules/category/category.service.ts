@@ -13,7 +13,6 @@ export class CategoryService {
   async findAll(groupId: string): Promise<Category[]> {
     return this.categoryRepository.find({
       where: { groupId },
-      relations: ['children', 'parent'],
       order: { name: 'ASC' },
     });
   }
@@ -21,7 +20,6 @@ export class CategoryService {
   async findOne(id: string, groupId: string): Promise<Category> {
     const category = await this.categoryRepository.findOne({
       where: { id, groupId },
-      relations: ['children', 'parent'],
     });
     if (!category) {
       throw new NotFoundException('Không tìm thấy danh mục này');
@@ -49,10 +47,5 @@ export class CategoryService {
     const category = await this.findOne(id, groupId);
     await this.categoryRepository.remove(category);
     return { success: true };
-  }
-
-  // Compatibility helper
-  async ensureDefaultIncomeCategories(_groupId: string) {
-    // No-op
   }
 }

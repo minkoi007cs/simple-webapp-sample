@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Sample, SampleStatus } from '../../common/entities/sample.entity';
 import { GroupUser, GroupUserStatus } from '../../common/entities/group-user.entity';
 
@@ -30,7 +30,12 @@ export class DashboardService {
         take: 10,
       }),
       this.sampleRepository.count({ where: { groupId } }),
-      this.sampleRepository.count({ where: { groupId, status: SampleStatus.ACTIVE } }),
+      this.sampleRepository.count({
+        where: {
+          groupId,
+          status: In([SampleStatus.AVAILABLE, SampleStatus.IN_USE, SampleStatus.ACTIVE]),
+        },
+      }),
       this.groupUserRepository.count({ where: { groupId, status: GroupUserStatus.ACTIVE } }),
     ]);
 
@@ -50,7 +55,15 @@ export class DashboardService {
       totalSampleCount: sampleCount,
       activeSampleCount,
       groupMembersCount: membersCount,
-      recentSamples: samples,
+      recentSamples: samples.map((s) => ({
+        id: s.id,
+        name: s.name,
+        code: s.code,
+        status: s.status,
+        type: s.type,
+        category: s.category ? { id: s.category.id, name: s.category.name } : null,
+        createdAt: s.createdAt,
+      })),
       samplesByCategory,
     };
   }

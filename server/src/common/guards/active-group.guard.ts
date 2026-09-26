@@ -4,13 +4,23 @@ import { Injectable, CanActivate, ExecutionContext, BadRequestException } from '
 export class ActiveGroupGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    const groupId = request.headers['x-group-id'] || request.headers['x-family-id'] || request.user?.activeGroupId;
+    const user = request.user;
+    const groupId =
+      request.headers['x-group-id'] ||
+      user?.groupId ||
+      user?.activeGroupId ||
+      user?.lastActiveGroupId;
 
     if (!groupId) {
       throw new BadRequestException('Vui lòng chọn hoặc tạo nhóm hoạt động trước khi tiếp tục.');
     }
 
     request.activeGroupId = groupId;
+    if (user) {
+      user.groupId = groupId;
+      user.lastActiveGroupId = groupId;
+      user.activeGroupId = groupId;
+    }
     return true;
   }
 }
