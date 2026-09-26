@@ -48,12 +48,10 @@ export class DashboardService {
 
     return {
       totalSampleCount: sampleCount,
-      totalAssetCount: sampleCount,
       activeSampleCount,
       groupMembersCount: membersCount,
       recentSamples: samples,
       samplesByCategory,
-      assetsByCategory: samplesByCategory,
     };
   }
 }

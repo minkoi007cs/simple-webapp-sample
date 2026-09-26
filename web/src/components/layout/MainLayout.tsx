@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Sidebar } from './Sidebar';
 import { MobileHeader } from './MobileHeader';
 
@@ -36,20 +35,11 @@ export const MainLayout = () => {
             {/* Main Content */}
             <main className="relative flex-1 w-full min-h-screen lg:min-w-0 overflow-x-hidden">
                 <div className="p-4 lg:p-6 max-w-7xl mx-auto pt-18 lg:pt-6">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={location.pathname}
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -6 }}
-                            transition={{ duration: 0.15, ease: "easeOut" }}
-                        >
-                            <Outlet />
-                        </motion.div>
-                    </AnimatePresence>
+                    <div key={location.pathname} className="animate-in fade-in duration-200">
+                        <Outlet />
+                    </div>
                 </div>
             </main>
         </div>
     );
 };
-

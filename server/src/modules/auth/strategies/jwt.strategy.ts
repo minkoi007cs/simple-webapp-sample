@@ -36,9 +36,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     const requestedGroupId =
-      String(req.headers['x-group-id'] || req.headers['x-family-id'] || '').trim() ||
+      String(req.headers['x-group-id'] || '').trim() ||
       payload.activeGroupId ||
-      payload.activeFamilyId ||
       user.lastActiveGroupId;
 
     let membership: GroupUser | null = null;
@@ -68,9 +67,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       return {
         ...user,
         groupId: null,
-        familyId: null,
         group: null,
-        family: null,
         role: user.systemRole === SystemRole.APP_ADMIN ? UserRole.APP_ADMIN : null,
       };
     }
@@ -79,9 +76,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       return {
         ...user,
         groupId: null,
-        familyId: null,
         group: null,
-        family: null,
         role: null,
       };
     }
@@ -89,9 +84,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return {
       ...user,
       groupId: membership.groupId,
-      familyId: membership.groupId,
       group: membership.group,
-      family: membership.group,
       role: membership.role?.code ?? UserRole.MEMBER,
       membershipId: membership.id,
     };

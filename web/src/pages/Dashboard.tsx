@@ -1,9 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { Tag } from 'antd';
-import {
-  ResponsiveContainer, Tooltip, Legend,
-  PieChart, Pie, Cell,
-} from 'recharts';
 import { Link } from 'react-router-dom';
 import {
   Package,
@@ -46,7 +42,8 @@ export const Dashboard = () => {
   if (isLoading) return <div className="p-8 text-center text-muted-foreground font-medium">Đang tải dữ liệu tổng quan...</div>;
   if (isError) return <div className="p-8 text-center text-destructive font-medium">Không thể tải dữ liệu cho nhóm hiện tại.</div>;
 
-  const samplesByCategory = stats?.samplesByCategory || [];
+  const samplesByCategory: { category: string; count: number; value: number }[] = stats?.samplesByCategory || [];
+  const totalCount = samplesByCategory.reduce((sum, item) => sum + item.count, 0);
 
   return (
     <div className="space-y-4 lg:space-y-5 animate-in fade-in duration-300">
@@ -99,29 +96,67 @@ export const Dashboard = () => {
               Xem tất cả <ArrowRight size={12} />
             </Link>
           </div>
-          <div className="h-[250px]">
+
+          <div className="h-[250px] flex items-center justify-center">
             {samplesByCategory.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={samplesByCategory}
-                    dataKey="value"
-                    nameKey="category"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={4}
-                    label={({ percent }) => `${((percent || 0) * 100).toFixed(0)}%`}
-                  >
-                    {samplesByCategory.map((_: any, index: number) => (
-                      <Cell key={`sc-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(val: any) => [`${val} mẫu`, 'Số lượng']} />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="w-full flex flex-col sm:flex-row items-center justify-around gap-4">
+                {/* SVG Donut */}
+                <div className="relative w-36 h-36 shrink-0 flex items-center justify-center">
+                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                    {(() => {
+                      let cumulativePercent = 0;
+                      return samplesByCategory.map((item, index) => {
+                        const percent = totalCount > 0 ? (item.count / totalCount) * 100 : 0;
+                        const strokeDasharray = `${percent} ${100 - percent}`;
+                        const strokeDashoffset = -cumulativePercent;
+                        cumulativePercent += percent;
+                        const color = PIE_COLORS[index % PIE_COLORS.length];
+
+                        return (
+                          <circle
+                            key={`donut-${item.category}`}
+                            cx="50"
+                            cy="50"
+                            r="38"
+                            fill="transparent"
+                            stroke={color}
+                            strokeWidth="16"
+                            strokeDasharray={strokeDasharray}
+                            strokeDashoffset={strokeDashoffset}
+                            pathLength="100"
+                            className="transition-all duration-500 hover:opacity-80"
+                          />
+                        );
+                      });
+                    })()}
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-xl font-bold text-foreground">{totalCount}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Mẫu</span>
+                  </div>
+                </div>
+
+                {/* Category Legend */}
+                <div className="flex-1 w-full max-h-[220px] overflow-y-auto space-y-2 pr-1">
+                  {samplesByCategory.map((item, index) => {
+                    const percent = totalCount > 0 ? ((item.count / totalCount) * 100).toFixed(0) : '0';
+                    const color = PIE_COLORS[index % PIE_COLORS.length];
+
+                    return (
+                      <div key={item.category} className="flex items-center justify-between text-xs p-1.5 rounded-lg hover:bg-muted/40 transition-colors">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                          <span className="text-foreground font-medium truncate">{item.category}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="font-semibold text-foreground">{item.count}</span>
+                          <span className="text-muted-foreground text-[11px] w-8 text-right">{percent}%</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             ) : (
               <EmptyState icon={Package} message="Chưa có dữ liệu mẫu phân loại" />
             )}

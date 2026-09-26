@@ -4,7 +4,7 @@ import { Button, Spin } from 'antd';
 import { UserPlus, AlertTriangle, LogIn } from 'lucide-react';
 import { authApi } from '../api/auth';
 
-const roleLabel = (role: string | null) => (role === 'GROUP_ADMIN' || role === 'FAMILY_ADMIN' ? 'Quản trị nhóm' : 'Thành viên');
+const roleLabel = (role: string | null) => (role === 'GROUP_ADMIN' ? 'Quản trị nhóm' : 'Thành viên');
 
 export const AcceptInvite = () => {
     const [searchParams] = useSearchParams();
@@ -31,7 +31,7 @@ export const AcceptInvite = () => {
                     return;
                 }
                 setPreview({
-                    groupName: res.data.groupName || res.data.familyName || null,
+                    groupName: res.data.groupName || null,
                     role: res.data.role,
                     email: res.data.email
                 });

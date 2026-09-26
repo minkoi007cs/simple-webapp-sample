@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import * as path from 'path';
-import * as fs from 'fs';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -53,32 +51,6 @@ import { AdminModule } from './modules/admin/admin.module';
           },
         };
       },
-    }),
-    I18nModule.forRoot({
-      fallbackLanguage: 'vi',
-      loaderOptions: {
-        path: (() => {
-          const pathsToTry = [
-            path.join(process.cwd(), 'dist/i18n'),
-            path.join(process.cwd(), 'server/dist/i18n'),
-            path.join(process.cwd(), 'src/i18n'),
-            path.join(process.cwd(), 'server/src/i18n'),
-            path.join(__dirname, '../i18n'),
-            path.join(__dirname, 'i18n'),
-          ];
-
-          for (const p of pathsToTry) {
-            if (fs.existsSync(p)) {
-              return p;
-            }
-          }
-          return path.join(process.cwd(), 'dist/i18n');
-        })(),
-        watch: process.env.NODE_ENV !== 'production',
-      },
-      resolvers: [
-        new HeaderResolver(['lang']),
-      ],
     }),
     AuthModule,
     UserModule,

@@ -13,6 +13,3 @@ import { Sample } from '../../common/entities/sample.entity';
   exports: [SampleService],
 })
 export class SampleModule {}
-
-// Compatibility export
-export { SampleModule as AssetModule };

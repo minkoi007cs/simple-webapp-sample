@@ -40,7 +40,6 @@
     "compression": "^1.8.1",
     "dayjs": "^1.11.20",
     "express": "^4.21.2",
-    "nestjs-i18n": "^10.8.3",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",

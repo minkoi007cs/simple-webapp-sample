@@ -1,18 +1,12 @@
-import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Group } from './group.entity';
 
-@Entity('sm_categories')
+@Entity('sws_categories')
 export class Category extends BaseEntity {
+  @Index()
   @Column({ type: 'uuid' })
   groupId: string;
-
-  get familyId(): string {
-    return this.groupId;
-  }
-  set familyId(val: string) {
-    this.groupId = val;
-  }
 
   @ManyToOne(() => Group, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'groupId' })

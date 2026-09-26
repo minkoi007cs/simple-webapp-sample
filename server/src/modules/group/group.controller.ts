@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { GroupService } from './group.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -11,7 +11,7 @@ import { User } from '../../common/entities/user.entity';
 @ApiTags('Groups')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, ActiveGroupGuard, PermissionGuard)
-@Controller(['groups', 'families'])
+@Controller('groups')
 export class GroupController {
   constructor(private readonly groupService: GroupService) {}
 
@@ -28,7 +28,7 @@ export class GroupController {
   @RequirePermission(AppModule.GROUP, PermissionAction.VIEW)
   @ApiOperation({ summary: 'Lấy thông tin nhóm hiện tại' })
   getCurrent(@GetUser() user: User) {
-    const groupId = user.lastActiveGroupId || (user as any).familyId;
+    const groupId = user.lastActiveGroupId!;
     return this.groupService.findOne(groupId);
   }
 
@@ -39,7 +39,7 @@ export class GroupController {
     @GetUser() user: User,
     @Body() body: { name?: string; description?: string; settings?: Record<string, any> },
   ) {
-    const groupId = user.lastActiveGroupId || (user as any).familyId;
+    const groupId = user.lastActiveGroupId!;
     return this.groupService.update(groupId, body);
   }
 }

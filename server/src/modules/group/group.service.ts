@@ -97,10 +97,4 @@ export class GroupService {
       throw new ForbiddenException('Nhóm phải có ít nhất 1 quản trị viên (Group Admin)');
     }
   }
-
-  async ensureFamilyKeepsAdmin(groupId: string) {
-    return this.ensureGroupKeepsAdmin(groupId);
-  }
 }
-
-export { GroupService as FamilyService };

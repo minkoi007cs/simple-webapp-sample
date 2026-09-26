@@ -48,10 +48,6 @@ export class AdminService {
     }));
   }
 
-  async findAllFamilies() {
-    return this.findAllGroups();
-  }
-
   async findAllUsers() {
     const users = await this.userRepository.find({
       order: { email: 'ASC' },
@@ -70,14 +66,11 @@ export class AdminService {
       systemRole: user.systemRole,
       isActive: user.isActive,
       lastActiveGroupId: user.lastActiveGroupId,
-      lastActiveFamilyId: user.lastActiveGroupId,
       memberships: memberships
         .filter((membership) => membership.userId === user.id)
         .map((membership) => ({
           groupId: membership.groupId,
           groupName: membership.group?.name,
-          familyId: membership.groupId,
-          familyName: membership.group?.name,
           status: membership.status,
           role: membership.role?.code,
         })),
@@ -87,10 +80,6 @@ export class AdminService {
   async updateGroupStatus(id: string, status: GroupStatus) {
     await this.groupRepository.update(id, { status });
     return this.groupRepository.findOne({ where: { id } });
-  }
-
-  async updateFamilyStatus(id: string, status: GroupStatus) {
-    return this.updateGroupStatus(id, status);
   }
 
   async updateGroup(id: string, data: { name?: string }) {
@@ -106,10 +95,6 @@ export class AdminService {
 
     await this.groupRepository.update(id, payload);
     return this.groupRepository.findOne({ where: { id } });
-  }
-
-  async updateFamily(id: string, data: { name?: string }) {
-    return this.updateGroup(id, data);
   }
 
   async updateGroupMemberRole(groupId: string, userId: string, roleCode: UserRole) {
@@ -152,17 +137,11 @@ export class AdminService {
       userId: membership.userId,
       groupId: membership.groupId,
       groupName: membership.group?.name,
-      familyId: membership.groupId,
-      familyName: membership.group?.name,
       email: membership.user?.email,
       fullName: membership.user?.fullName,
       systemRole: membership.user?.systemRole,
       role: membership.role.code,
     };
-  }
-
-  async updateFamilyMemberRole(groupId: string, userId: string, roleCode: UserRole) {
-    return this.updateGroupMemberRole(groupId, userId, roleCode);
   }
 
   async updateSystemRole(actorUserId: string, userId: string, systemRole: SystemRole) {
@@ -204,7 +183,6 @@ export class AdminService {
     ]);
     return {
       totalGroups,
-      totalFamilies: totalGroups,
       totalUsers,
       totalMemberships,
     };
@@ -257,10 +235,6 @@ export class AdminService {
     return this.findAllGroups();
   }
 
-  async createFamilyByAdmin(name: string, adminUserId: string) {
-    return this.createGroupByAdmin(name, adminUserId);
-  }
-
   async addMemberToGroup(groupId: string, userId: string, roleCode: UserRole) {
     if (roleCode === UserRole.APP_ADMIN) {
       throw new ForbiddenException('APP_ADMIN là vai trò hệ thống, không phải vai trò trong nhóm');
@@ -310,10 +284,6 @@ export class AdminService {
     return this.findAllGroups();
   }
 
-  async addMemberToFamily(groupId: string, userId: string, roleCode: UserRole) {
-    return this.addMemberToGroup(groupId, userId, roleCode);
-  }
-
   async removeMemberFromGroup(groupId: string, userId: string) {
     const membership = await this.groupUserRepository.findOne({
       where: { groupId, userId },
@@ -336,10 +306,6 @@ export class AdminService {
     }
 
     return this.findAllGroups();
-  }
-
-  async removeMemberFromFamily(groupId: string, userId: string) {
-    return this.removeMemberFromGroup(groupId, userId);
   }
 
   async deleteGroup(groupId: string) {
@@ -367,9 +333,5 @@ export class AdminService {
     });
 
     return this.findAllGroups();
-  }
-
-  async deleteFamily(groupId: string) {
-    return this.deleteGroup(groupId);
   }
 }

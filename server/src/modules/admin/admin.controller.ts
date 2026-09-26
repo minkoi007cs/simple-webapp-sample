@@ -24,7 +24,7 @@ import { RequirePermission, AppModule, PermissionAction } from '../../common/dec
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
-  @Get(['groups', 'families'])
+  @Get('groups')
   @RequirePermission(AppModule.ADMIN, PermissionAction.VIEW)
   @ApiOperation({ summary: 'Lấy danh sách tất cả các nhóm' })
   findAllGroups() {
@@ -38,21 +38,21 @@ export class AdminController {
     return this.adminService.findAllUsers();
   }
 
-  @Patch(['groups/:id/status', 'families/:id/status'])
+  @Patch('groups/:id/status')
   @RequirePermission(AppModule.ADMIN, PermissionAction.UPDATE)
   @ApiOperation({ summary: 'Cập nhật trạng thái nhóm (ACTIVE / INACTIVE)' })
   updateGroupStatus(@Param('id') id: string, @Body('status') status: GroupStatus) {
     return this.adminService.updateGroupStatus(id, status);
   }
 
-  @Patch(['groups/:id', 'families/:id'])
+  @Patch('groups/:id')
   @RequirePermission(AppModule.ADMIN, PermissionAction.UPDATE)
   @ApiOperation({ summary: 'Cập nhật thông tin nhóm' })
   updateGroup(@Param('id') id: string, @Body() data: { name?: string }) {
     return this.adminService.updateGroup(id, data);
   }
 
-  @Patch(['groups/:groupId/members/:userId/role', 'families/:groupId/members/:userId/role'])
+  @Patch('groups/:groupId/members/:userId/role')
   @RequirePermission(AppModule.ADMIN, PermissionAction.UPDATE)
   @ApiOperation({ summary: 'Cập nhật vai trò của thành viên trong nhóm' })
   updateGroupMemberRole(
@@ -81,7 +81,7 @@ export class AdminController {
     return this.adminService.getSystemStats();
   }
 
-  @Post(['groups', 'families'])
+  @Post('groups')
   @RequirePermission(AppModule.ADMIN, PermissionAction.CREATE)
   @ApiOperation({ summary: 'Tạo nhóm mới bởi App Admin' })
   createGroup(
@@ -91,7 +91,7 @@ export class AdminController {
     return this.adminService.createGroupByAdmin(name, adminUserId);
   }
 
-  @Post(['groups/:groupId/members', 'families/:groupId/members'])
+  @Post('groups/:groupId/members')
   @RequirePermission(AppModule.ADMIN, PermissionAction.CREATE)
   @ApiOperation({ summary: 'Gán người dùng vào nhóm' })
   addMemberToGroup(
@@ -102,7 +102,7 @@ export class AdminController {
     return this.adminService.addMemberToGroup(groupId, userId, roleCode);
   }
 
-  @Delete(['groups/:groupId/members/:userId', 'families/:groupId/members/:userId'])
+  @Delete('groups/:groupId/members/:userId')
   @RequirePermission(AppModule.ADMIN, PermissionAction.DELETE)
   @ApiOperation({ summary: 'Gỡ người dùng khỏi nhóm' })
   removeMemberFromGroup(
@@ -112,7 +112,7 @@ export class AdminController {
     return this.adminService.removeMemberFromGroup(groupId, userId);
   }
 
-  @Delete(['groups/:id', 'families/:id'])
+  @Delete('groups/:id')
   @RequirePermission(AppModule.ADMIN, PermissionAction.DELETE)
   @ApiOperation({ summary: 'Xóa hoàn toàn một nhóm' })
   deleteGroup(@Param('id') id: string) {

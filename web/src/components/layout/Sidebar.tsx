@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Select, Modal, Form, Input, Button, Tooltip } from 'antd';
 import {
-  Rocket,
   LayoutDashboard,
   Package,
   Settings,
@@ -18,7 +17,6 @@ import { useSession } from '../auth/SessionProvider';
 import { getGroupRoleDescription, APP_ADMIN_DESCRIPTION } from '../../utils/roleDescriptions';
 
 const navigation = [
-  { name: 'Hướng dẫn bắt đầu', href: '/', icon: Rocket, moduleKey: null, badge: 'Start Here' },
   { name: 'Tổng quan', href: '/dashboard', icon: LayoutDashboard, moduleKey: 'DASHBOARD' as const },
   { name: 'Quản lý Mẫu (Samples)', href: '/samples', icon: Package, moduleKey: 'SAMPLE' as const },
   { name: 'Phân loại', href: '/categories', icon: Tags, moduleKey: 'CATEGORY' as const },
@@ -83,7 +81,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
       </button>
 
       <Link
-        to="/"
+        to="/dashboard"
         onClick={() => onClose?.()}
         className="mb-3 flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border bg-background hover:bg-accent/50 transition-colors shadow-xs"
       >
@@ -119,7 +117,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
             loading={isSwitchingGroup}
             onChange={(value) => switchGroup(value)}
             options={memberships.map((membership) => {
-              const isInactive = membership.groupStatus === 'INACTIVE' || membership.familyStatus === 'INACTIVE';
+              const isInactive = membership.groupStatus === 'INACTIVE';
               return {
                 value: membership.groupId,
                 disabled: isInactive,
@@ -185,7 +183,6 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
           <NavLink
             key={item.name}
             to={item.href}
-            end={item.href === '/'}
             onClick={() => onClose?.()}
             className={({ isActive }) => cn(
               "group flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors",
@@ -198,11 +195,6 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
               <item.icon size={16} className="shrink-0" />
               <span className="truncate">{item.name}</span>
             </div>
-            {'badge' in item && item.badge && (
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                {item.badge}
-              </span>
-            )}
           </NavLink>
         ))}
       </nav>

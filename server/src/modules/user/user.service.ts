@@ -36,7 +36,6 @@ export class UserService {
       status: membership.status,
       membershipId: membership.id,
       groupId: membership.groupId,
-      familyId: membership.groupId, // Compatibility
       invitedByUserId: membership.invitedByUserId,
     }));
 
@@ -81,7 +80,6 @@ export class UserService {
       status: membership.status,
       membershipId: membership.id,
       groupId: membership.groupId,
-      familyId: membership.groupId,
     };
   }
 
@@ -164,7 +162,6 @@ export class UserService {
       role: membership.role.code,
       membershipId: membership.id,
       groupId,
-      familyId: groupId,
     };
   }
 

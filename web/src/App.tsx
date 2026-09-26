@@ -17,14 +17,14 @@ const LoginSuccess = lazy(() => import('./pages/LoginSuccess').then((module) => 
 const AcceptInvite = lazy(() => import('./pages/AcceptInvite').then((module) => ({ default: module.AcceptInvite })));
 const Settings = lazy(() => import('./pages/Settings').then((module) => ({ default: module.Settings })));
 const AdminPanel = lazy(() => import('./pages/AdminPanel').then((module) => ({ default: module.AdminPanel })));
-const SetupGuide = lazy(() => import('./pages/SetupGuide').then((module) => ({ default: module.SetupGuide })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 30_000,
+      staleTime: 60_000,
+      gcTime: 5 * 60_000,
     },
   },
 });
@@ -94,16 +94,14 @@ function AppShell() {
 
             <Route element={<AuthGuard />}>
               <Route path="/" element={<MainLayout />}>
-                <Route index element={<HomePage />} />
-                <Route path="guide" element={<SetupGuide />} />
+                <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<ProtectedPage moduleKey="DASHBOARD"><Dashboard /></ProtectedPage>} />
                 <Route path="samples" element={<ProtectedPage moduleKey="SAMPLE"><SampleList /></ProtectedPage>} />
-                <Route path="assets" element={<Navigate to="/samples" replace />} />
                 <Route path="categories" element={<ProtectedPage moduleKey="CATEGORY"><CategoryList /></ProtectedPage>} />
                 <Route path="members" element={<ProtectedPage moduleKey="USER"><MemberList /></ProtectedPage>} />
                 <Route path="admin" element={<ProtectedPage moduleKey="ADMIN"><AdminPanel /></ProtectedPage>} />
                 <Route path="settings" element={<Settings />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Route>
           </Routes>
@@ -125,16 +123,6 @@ const PageFallback = () => (
   </div>
 );
 
-function HomePage() {
-  const { isLoading } = useSession();
-
-  if (isLoading) {
-    return <RouteLoading />;
-  }
-
-  return <SetupGuide />;
-}
-
 function ProtectedPage({
   moduleKey,
   children,
@@ -149,7 +137,7 @@ function ProtectedPage({
   }
 
   if (!canAccess(moduleKey, 'view')) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

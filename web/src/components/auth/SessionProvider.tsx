@@ -13,11 +13,9 @@ import {
 type ModuleKey =
   | 'DASHBOARD'
   | 'CATEGORY'
-  | 'ASSET'
   | 'SAMPLE'
   | 'USER'
   | 'GROUP'
-  | 'FAMILY'
   | 'ADMIN';
 
 type PermissionAction = 'view' | 'create' | 'update' | 'delete';
@@ -28,39 +26,24 @@ const ROLE_PERMISSIONS: PermissionMatrix = {
   APP_ADMIN: {
     ADMIN: ['view', 'create', 'update', 'delete'],
     GROUP: ['view', 'create', 'update', 'delete'],
-    FAMILY: ['view', 'create', 'update', 'delete'],
     USER: ['view', 'create', 'update', 'delete'],
     DASHBOARD: ['view'],
     CATEGORY: ['view', 'create', 'update', 'delete'],
     SAMPLE: ['view', 'create', 'update', 'delete'],
-    ASSET: ['view', 'create', 'update', 'delete'],
   },
   GROUP_ADMIN: {
     GROUP: ['view', 'update'],
-    FAMILY: ['view', 'update'],
     USER: ['view', 'create', 'update', 'delete'],
     DASHBOARD: ['view'],
     CATEGORY: ['view', 'create', 'update', 'delete'],
     SAMPLE: ['view', 'create', 'update', 'delete'],
-    ASSET: ['view', 'create', 'update', 'delete'],
-  },
-  FAMILY_ADMIN: {
-    GROUP: ['view', 'update'],
-    FAMILY: ['view', 'update'],
-    USER: ['view', 'create', 'update', 'delete'],
-    DASHBOARD: ['view'],
-    CATEGORY: ['view', 'create', 'update', 'delete'],
-    SAMPLE: ['view', 'create', 'update', 'delete'],
-    ASSET: ['view', 'create', 'update', 'delete'],
   },
   MEMBER: {
     GROUP: ['view'],
-    FAMILY: ['view'],
     USER: ['view'],
     DASHBOARD: ['view'],
     CATEGORY: ['view'],
     SAMPLE: ['view', 'create', 'update', 'delete'],
-    ASSET: ['view', 'create', 'update', 'delete'],
   },
 };
 
@@ -70,20 +53,14 @@ type SessionContextValue = {
   memberships: SessionMembership[];
   activeGroupId: string | null;
   activeGroupName: string | null;
-  activeFamilyId: string | null;
-  activeFamilyName: string | null;
   role: GroupRole;
   systemRole: SystemRole | null;
   isLoading: boolean;
   canAccess: (moduleKey: ModuleKey, action?: PermissionAction) => boolean;
   switchGroup: (groupId: string) => Promise<void>;
-  switchFamily: (groupId: string) => Promise<void>;
   isSwitchingGroup: boolean;
-  isSwitchingFamily: boolean;
   createGroup: (name?: string) => Promise<void>;
-  createFamily: (name?: string) => Promise<void>;
   isCreatingGroup: boolean;
-  isCreatingFamily: boolean;
   refreshSession: () => Promise<SessionResponse | undefined>;
 };
 
@@ -121,7 +98,7 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
       });
       const activeName =
         session.user.memberships.find(
-          (item) => item.groupId === session.user.groupId || item.familyId === session.user.groupId,
+          (item) => item.groupId === session.user.groupId,
         )?.groupName || '';
       message.success(`Đã chuyển sang nhóm ${activeName}`.trim());
     },
@@ -149,19 +126,11 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
 
   const session = sessionQuery.data ?? null;
   const user = session?.user ?? null;
-  const memberships = useMemo(() => {
-    return (user?.memberships ?? []).map((m) => ({
-      ...m,
-      groupId: m.groupId || m.familyId || '',
-      groupName: m.groupName || m.familyName || '',
-      familyId: m.groupId || m.familyId || '',
-      familyName: m.groupName || m.familyName || '',
-    }));
-  }, [user?.memberships]);
+  const memberships = user?.memberships ?? [];
 
-  const activeGroupId = user?.groupId || user?.familyId || null;
+  const activeGroupId = user?.groupId || null;
   const activeGroupName =
-    memberships.find((m) => m.groupId === activeGroupId || m.familyId === activeGroupId)?.groupName ?? null;
+    memberships.find((m) => m.groupId === activeGroupId)?.groupName ?? null;
 
   const role = user?.role ?? null;
   const systemRole = user?.systemRole ?? null;
@@ -173,8 +142,6 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
       memberships,
       activeGroupId,
       activeGroupName,
-      activeFamilyId: activeGroupId,
-      activeFamilyName: activeGroupName,
       role,
       systemRole,
       isLoading: sessionQuery.isLoading,
@@ -199,22 +166,11 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
         }
         await switchGroupMutation.mutateAsync(groupId);
       },
-      switchFamily: async (groupId: string) => {
-        if (groupId === activeGroupId) {
-          return;
-        }
-        await switchGroupMutation.mutateAsync(groupId);
-      },
       isSwitchingGroup: switchGroupMutation.isPending,
-      isSwitchingFamily: switchGroupMutation.isPending,
       createGroup: async (name?: string) => {
         await createGroupMutation.mutateAsync(name);
       },
-      createFamily: async (name?: string) => {
-        await createGroupMutation.mutateAsync(name);
-      },
       isCreatingGroup: createGroupMutation.isPending,
-      isCreatingFamily: createGroupMutation.isPending,
       refreshSession: async () => {
         const next = await sessionQuery.refetch();
         return next.data;

@@ -1,25 +1,25 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Table, Button, Modal, Form, Input, Space, message, Select } from 'antd';
-import { Plus, Copy, FolderTree, X, Check, Trash2 } from 'lucide-react';
+import { Table, Button, Modal, Form, Input, Space, message, Select, Popconfirm, Card } from 'antd';
+import { Plus, FolderTree, Edit2, Trash2, FolderPlus } from 'lucide-react';
 import {
   buildCategoryPathLabel,
   categoryApi,
   type Category,
 } from '../api/category';
+import { useSession } from '../components/auth/SessionProvider';
 
 export const CategoryList = () => {
   const queryClient = useQueryClient();
+  const { canAccess } = useSession();
+  const canEdit = canAccess('CATEGORY', 'update') || canAccess('CATEGORY', 'create');
+  const canDelete = canAccess('CATEGORY', 'delete');
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [copyMode, setCopyMode] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [form] = Form.useForm();
-  const [reassignOpen, setReassignOpen] = useState(false);
-  const [usageSummary, setUsageSummary] = useState<{ assetCount: number; expenseCount: number } | null>(null);
-  const [reassignTargetId, setReassignTargetId] = useState<string | undefined>(undefined);
-  const [usageLoading, setUsageLoading] = useState(false);
 
-  const { data: categories, isLoading, isError } = useQuery({
+  const { data: categories = [], isLoading, isError } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryApi.findAll().then((res) => res.data),
   });
@@ -56,56 +56,27 @@ export const CategoryList = () => {
     return roots;
   }, [categories]);
 
-  const descendantIds = useMemo(() => {
-    if (!editingCategory || !categories) return new Set<string>();
-
-    const childrenByParent = new Map<string, string[]>();
-    categories.forEach((category) => {
-      if (!category.parentId) return;
-      const list = childrenByParent.get(category.parentId) ?? [];
-      list.push(category.id);
-      childrenByParent.set(category.parentId, list);
-    });
-
-    const ids = new Set<string>();
-    const stack = [...(childrenByParent.get(editingCategory.id) ?? [])];
-
-    while (stack.length) {
-      const currentId = stack.pop()!;
-      if (ids.has(currentId)) continue;
-      ids.add(currentId);
-      stack.push(...(childrenByParent.get(currentId) ?? []));
-    }
-
-    return ids;
-  }, [categories, editingCategory]);
-
   const parentOptions = useMemo(() => {
-    const excludedIds = new Set<string>(editingCategory ? [editingCategory.id, ...descendantIds] : [...descendantIds]);
-
     return (categories ?? [])
-      .filter((category) =>
-        !category.parentId
-        && !excludedIds.has(category.id),
-      )
+      .filter((category) => !category.parentId && category.id !== editingCategory?.id)
       .map((category) => ({
         value: category.id,
         label: buildCategoryPathLabel(categories ?? [], category.id),
       }));
-  }, [categories, descendantIds, editingCategory]);
+  }, [categories, editingCategory]);
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<Category>) => categoryApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      message.success('Category created successfully');
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      message.success('Tạo phân loại thành công');
       setIsModalOpen(false);
-      setCopyMode(false);
       setEditingCategory(null);
       form.resetFields();
     },
     onError: (error: any) => {
-      message.error(error?.response?.data?.message || 'Failed to create category');
+      message.error(error?.response?.data?.message || 'Không thể tạo phân loại');
     },
   });
 
@@ -113,94 +84,38 @@ export const CategoryList = () => {
     mutationFn: (data: Partial<Category>) => categoryApi.update(editingCategory!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      message.success('Category updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      message.success('Cập nhật phân loại thành công');
       setIsModalOpen(false);
-      setCopyMode(false);
       setEditingCategory(null);
       form.resetFields();
     },
     onError: (error: any) => {
-      message.error(error?.response?.data?.message || 'Failed to update category');
+      message.error(error?.response?.data?.message || 'Không thể cập nhật phân loại');
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: ({ id, reassignTo }: { id: string; reassignTo?: string }) =>
-      categoryApi.delete(id, reassignTo ? { reassignTo } : undefined),
+    mutationFn: (id: string) => categoryApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['samples'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       message.success('Xóa phân loại thành công');
-      setReassignOpen(false);
-      setUsageSummary(null);
-      setReassignTargetId(undefined);
-      setIsModalOpen(false);
-      setEditingCategory(null);
-      setCopyMode(false);
-      form.resetFields();
     },
     onError: (error: any) => {
-      message.error(error?.response?.data?.message || 'Failed to delete category');
+      message.error(error?.response?.data?.message || 'Không thể xóa phân loại');
     },
   });
 
-  const reassignCategoryOptions = useMemo(() => {
-    if (!editingCategory || !categories) return [];
-    return categories
-      .filter((c) => c.id !== editingCategory.id && !descendantIds.has(c.id))
-      .map((c) => ({
-        value: c.id,
-        label: buildCategoryPathLabel(categories, c.id),
-      }));
-  }, [categories, descendantIds, editingCategory]);
-
-  const openDeleteCategoryFlow = async () => {
-    if (!editingCategory) return;
-    setUsageLoading(true);
-    try {
-      const usage = await categoryApi.getUsageBeforeDelete(editingCategory.id);
-      if (usage.childCategoryCount > 0) {
-        message.error(
-          `Cannot delete: category still has ${usage.childCategoryCount} subcategories. Please reassign or delete subcategories first.`,
-        );
-        return;
-      }
-      if (usage.assetCount + usage.expenseCount === 0) {
-        Modal.confirm({
-          title: 'Confirm Deletion',
-          content: `Are you sure you want to delete category "${editingCategory.name}"?`,
-          onOk: () => deleteMutation.mutateAsync({ id: editingCategory.id }),
-        });
-        return;
-      }
-      setUsageSummary({ assetCount: usage.assetCount, expenseCount: usage.expenseCount });
-      setReassignTargetId(undefined);
-      setReassignOpen(true);
-    } catch (error: any) {
-      message.error(error?.response?.data?.message || 'Failed to check category usage');
-    } finally {
-      setUsageLoading(false);
-    }
+  const handleOpenCreate = (parentId?: string) => {
+    setEditingCategory(null);
+    form.resetFields();
+    form.setFieldsValue({ parentId: parentId || undefined });
+    setIsModalOpen(true);
   };
 
-  const confirmDeleteWithReassign = async () => {
-    if (!editingCategory) {
-      return Promise.reject();
-    }
-    if (reassignCategoryOptions.length === 0) {
-      message.warning('No available categories to reassign to. Please create one first.');
-      return Promise.reject();
-    }
-    if (!reassignTargetId) {
-      message.warning('Please select a target category to reassign assets and transactions');
-      return Promise.reject();
-    }
-    await deleteMutation.mutateAsync({ id: editingCategory.id, reassignTo: reassignTargetId });
-  };
-
-  const openCategoryEditModal = (record: Category) => {
-    setCopyMode(false);
+  const handleOpenEdit = (record: Category) => {
     setEditingCategory(record);
     form.setFieldsValue({
       name: record.name,
@@ -209,154 +124,108 @@ export const CategoryList = () => {
     setIsModalOpen(true);
   };
 
-  const openCategoryCopyModal = (record: Category, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingCategory(null);
-    setCopyMode(true);
-    const suggestedName = `${record.name} (Copy)`;
-    form.setFieldsValue({
-      name: suggestedName,
-      parentId: record.parentId ?? undefined,
-    });
-    setIsModalOpen(true);
-  };
-
   const columns = [
     {
-      title: 'Category Name',
+      title: 'Tên phân loại',
       dataIndex: 'name',
       key: 'name',
       render: (text: string, record: Category) => (
         <Space>
-          <FolderTree size={16} className={!record.parentId ? 'text-foreground' : 'text-muted-foreground'} />
-          <span className={!record.parentId ? 'font-semibold text-foreground' : 'text-muted-foreground'}>{text}</span>
+          <FolderTree size={16} className={!record.parentId ? 'text-primary' : 'text-muted-foreground'} />
+          <span className={!record.parentId ? 'font-semibold text-foreground' : 'text-foreground'}>{text}</span>
         </Space>
       ),
       sorter: (a: Category, b: Category) => (a.name || '').localeCompare(b.name || ''),
     },
     {
-      title: 'Actions',
+      title: 'Thao tác',
       key: 'action',
-      width: 80,
+      width: 140,
       render: (_: unknown, record: Category) => (
-        <Space size="middle" onClick={(e) => e.stopPropagation()}>
-          <Button
-            type="text"
-            icon={<Copy size={16} />}
-            title="Duplicate"
-            aria-label="Duplicate"
-            onClick={(e) => openCategoryCopyModal(record, e)}
-          />
+        <Space size="small" onClick={(e) => e.stopPropagation()}>
+          {!record.parentId && canEdit && (
+            <Button
+              type="text"
+              size="small"
+              icon={<FolderPlus size={15} />}
+              title="Thêm danh mục con"
+              onClick={() => handleOpenCreate(record.id)}
+            />
+          )}
+          {canEdit && (
+            <Button
+              type="text"
+              size="small"
+              icon={<Edit2 size={15} />}
+              title="Chỉnh sửa"
+              onClick={() => handleOpenEdit(record)}
+            />
+          )}
+          {canDelete && (
+            <Popconfirm
+              title="Xác nhận xóa phân loại"
+              description="Bạn có chắc chắn muốn xóa phân loại này?"
+              onConfirm={() => deleteMutation.mutate(record.id)}
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+            >
+              <Button type="text" danger size="small" icon={<Trash2 size={15} />} title="Xóa" />
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
   ];
 
-  const isEditingGroup = editingCategory !== null && (editingCategory.children?.length ?? 0) > 0;
-
   return (
-    <div className="space-y-4 lg:space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-4 animate-in fade-in duration-300">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground font-sans">Categories</h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Phân Loại Mẫu (Categories)</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Quản lý cây phân loại và danh mục nhóm mẫu
+          </p>
         </div>
-        <Button
-          type="primary"
-          icon={<Plus size={18} />}
-          onClick={() => {
-            setEditingCategory(null);
-            setCopyMode(false);
-            form.resetFields();
-            form.setFieldsValue({
-              parentId: undefined,
-              name: '',
-            });
-            setIsModalOpen(true);
-          }}
-          className="w-full sm:w-auto"
-          title="Add Category"
-          aria-label="Add Category"
-        />
+        {canEdit && (
+          <Button
+            type="primary"
+            icon={<Plus size={16} />}
+            onClick={() => handleOpenCreate()}
+            className="flex items-center gap-1.5"
+          >
+            Thêm Phân Loại
+          </Button>
+        )}
       </div>
 
-      <div className="glass-card p-4 lg:p-6 overflow-hidden">
-        {isError && <div className="mb-3 p-3 rounded-lg bg-rose-50 text-rose-600 text-sm">Failed to load categories. Please retry.</div>}
-        <div className="overflow-x-auto">
-          <Table
-            columns={columns}
-            dataSource={categoryTree}
-            loading={isLoading}
-            rowKey="id"
-            defaultExpandAllRows
-            onRow={(record) => ({
-              onClick: () => openCategoryEditModal(record),
-              style: { cursor: 'pointer' },
-            })}
-            pagination={false}
-            scroll={{ x: 500 }}
-            size={window.innerWidth < 768 ? 'small' : 'middle'}
-          />
-        </div>
-      </div>
+      <Card className="shadow-xs border-border" bodyStyle={{ padding: '16px' }}>
+        {isError && (
+          <div className="mb-3 p-3 rounded-lg bg-rose-50 text-rose-600 text-sm">
+            Không thể tải danh sách phân loại. Vui lòng thử lại.
+          </div>
+        )}
+        <Table
+          columns={columns}
+          dataSource={categoryTree}
+          loading={isLoading}
+          rowKey="id"
+          defaultExpandAllRows
+          pagination={false}
+          locale={{ emptyText: 'Chưa có phân loại nào trong nhóm' }}
+        />
+      </Card>
 
       <Modal
-        title={
-          editingCategory
-            ? 'Edit Category'
-            : copyMode
-              ? 'Duplicate Category'
-              : 'Add New Category'
-        }
+        title={editingCategory ? 'Chỉnh sửa Phân Loại' : 'Thêm Phân Loại Mới'}
         open={isModalOpen}
-        forceRender
         onCancel={() => {
           setIsModalOpen(false);
-          setCopyMode(false);
           setEditingCategory(null);
           form.resetFields();
-          setReassignOpen(false);
-          setUsageSummary(null);
-          setReassignTargetId(undefined);
         }}
-        confirmLoading={createMutation.isPending || updateMutation.isPending}
-        footer={[
-          editingCategory ? (
-            <Button
-              key="delete"
-              danger
-              icon={<Trash2 size={18} />}
-              title="Delete Category"
-              aria-label="Delete Category"
-              loading={deleteMutation.isPending || usageLoading}
-              onClick={openDeleteCategoryFlow}
-            />
-          ) : null,
-          <Button
-            key="cancel"
-            type="text"
-            icon={<X size={18} />}
-            title="Cancel"
-            aria-label="Cancel"
-            onClick={() => {
-              setIsModalOpen(false);
-              setCopyMode(false);
-              setEditingCategory(null);
-              form.resetFields();
-              setReassignOpen(false);
-              setUsageSummary(null);
-              setReassignTargetId(undefined);
-            }}
-          />,
-          <Button
-            key="submit"
-            type="primary"
-            icon={<Check size={18} />}
-            title={editingCategory ? 'Update' : 'Save'}
-            aria-label={editingCategory ? 'Update' : 'Save'}
-            loading={createMutation.isPending || updateMutation.isPending}
-            onClick={() => form.submit()}
-          />,
-        ]}
+        footer={null}
+        destroyOnClose
       >
         <Form
           form={form}
@@ -376,90 +245,33 @@ export const CategoryList = () => {
         >
           <Form.Item
             name="name"
-            label="Category Name"
-            rules={[{ required: true, message: 'Please enter category name' }]}
+            label="Tên phân loại"
+            rules={[{ required: true, message: 'Vui lòng nhập tên phân loại' }]}
           >
-            <Input placeholder="e.g., Investments, Food & Dining, Salary..." />
+            <Input placeholder="Ví dụ: Vải sợi, Phụ kiện..." />
           </Form.Item>
           <Form.Item
             name="parentId"
-            label="Parent Group"
-            extra={
-              isEditingGroup
-                ? 'This category has subcategories and cannot have a parent.'
-                : 'Leave empty for root group. Select a parent to create a subcategory.'
-            }
+            label="Phân loại cha (Tùy chọn)"
+            extra="Để trống nếu là nhóm phân loại gốc."
           >
             <Select
               allowClear
-              disabled={isEditingGroup}
-              placeholder={isEditingGroup ? 'Root group — cannot have parent' : 'Select parent group (optional)'}
+              placeholder="Chọn nhóm cha"
               options={parentOptions}
             />
           </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title="Reassign Data and Delete Category"
-        open={reassignOpen}
-        onCancel={() => {
-          setReassignOpen(false);
-          setUsageSummary(null);
-          setReassignTargetId(undefined);
-        }}
-        footer={[
-          <Button
-            key="cancel"
-            type="text"
-            icon={<X size={18} />}
-            title="Cancel"
-            aria-label="Cancel"
-            onClick={() => {
-              setReassignOpen(false);
-              setUsageSummary(null);
-              setReassignTargetId(undefined);
-            }}
-          />,
-          <Button
-            key="ok"
-            type="primary"
-            danger
-            icon={<Check size={18} />}
-            title="Reassign and Delete"
-            aria-label="Reassign and Delete"
-            loading={deleteMutation.isPending}
-            onClick={() => void confirmDeleteWithReassign()}
-          />,
-        ]}
-        destroyOnClose
-      >
-        {usageSummary && editingCategory ? (
-          <div className="space-y-4">
-            <p className="text-sm text-foreground">
-              Phân loại <strong>{editingCategory.name}</strong> đang có{' '}
-              <strong>{usageSummary.assetCount}</strong> mẫu (samples). Vui lòng chọn phân loại đích để chuyển toàn bộ mẫu sang trước khi xóa.
-            </p>
-            {reassignCategoryOptions.length === 0 ? (
-              <p className="text-sm text-amber-600">
-                Chưa có phân loại thay thế. Vui lòng tạo ít nhất một phân loại khác trước.
-              </p>
-            ) : (
-              <div>
-                <div className="mb-2 text-sm font-medium text-foreground">Phân loại đích</div>
-                <Select
-                  className="w-full"
-                  placeholder="Chọn phân loại chuyển tới"
-                  options={reassignCategoryOptions}
-                  value={reassignTargetId}
-                  onChange={(v) => setReassignTargetId(v)}
-                  showSearch
-                  optionFilterProp="label"
-                />
-              </div>
-            )}
+          <div className="flex justify-end gap-2 mt-5">
+            <Button onClick={() => setIsModalOpen(false)}>Hủy</Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={createMutation.isPending || updateMutation.isPending}
+            >
+              {editingCategory ? 'Cập nhật' : 'Tạo mới'}
+            </Button>
           </div>
-        ) : null}
+        </Form>
       </Modal>
     </div>
   );

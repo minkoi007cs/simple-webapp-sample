@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, Index } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { GroupUser } from './group-user.entity';
 import { Invite } from './invite.entity';
@@ -14,8 +14,9 @@ export enum SystemRole {
   APP_ADMIN = 'APP_ADMIN',
 }
 
-@Entity('sm_users')
+@Entity('sws_users')
 export class User extends BaseEntity {
+  @Index({ unique: true })
   @Column({ unique: true })
   email: string;
 
@@ -28,6 +29,7 @@ export class User extends BaseEntity {
   @Column({ type: 'text', nullable: true, comment: 'Comma-separated aliases' })
   otherNames: string;
 
+  @Index()
   @Column({ nullable: true })
   googleId: string;
 
@@ -40,13 +42,6 @@ export class User extends BaseEntity {
 
   @Column({ type: 'uuid', nullable: true })
   lastActiveGroupId: string | null;
-
-  get lastActiveFamilyId(): string | null {
-    return this.lastActiveGroupId;
-  }
-  set lastActiveFamilyId(val: string | null) {
-    this.lastActiveGroupId = val;
-  }
 
   @Column({ default: true })
   isActive: boolean;

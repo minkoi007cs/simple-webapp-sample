@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Card, Form, Input, Button, Switch, Divider, message, Tabs } from 'antd';
+import { Card, Form, Input, Button, Switch, message, Tabs } from 'antd';
 import { Building2, User, Bell, Shield, Palette, MoonStar, SunMedium, Sparkles, Save, Lock } from 'lucide-react';
 import { useThemeMode } from '../components/theme/ThemeProvider';
 import { useSession } from '../components/auth/SessionProvider';
@@ -25,8 +25,8 @@ export const Settings = () => {
     });
   }, [form, user]);
 
-  const canViewGroup = Boolean(activeGroupId && (canAccess('GROUP', 'view') || canAccess('FAMILY', 'view') || systemRole === 'APP_ADMIN'));
-  const canUpdateGroup = Boolean(activeGroupId && (canAccess('GROUP', 'update') || canAccess('FAMILY', 'update') || systemRole === 'APP_ADMIN'));
+  const canViewGroup = Boolean(activeGroupId && (canAccess('GROUP', 'view') || systemRole === 'APP_ADMIN'));
+  const canUpdateGroup = Boolean(activeGroupId && (canAccess('GROUP', 'update') || systemRole === 'APP_ADMIN'));
   const canViewMembers = canAccess('USER', 'view');
   const canViewCategories = canAccess('CATEGORY', 'view');
 
@@ -63,10 +63,13 @@ export const Settings = () => {
   });
 
   const profileTab = (
-    <div className="space-y-6">
-      <Card title={<div className="flex items-center gap-2"><User size={18} /><span>Hồ sơ cá nhân</span></div>} className="shadow-xs border-border rounded-xl glass-card">
+    <div className="space-y-4">
+      <Card
+        title={<div className="flex items-center gap-2 text-sm font-semibold"><User size={16} /><span>Hồ sơ cá nhân</span></div>}
+        className="shadow-xs border-border"
+      >
         <Form form={form} layout="vertical" onFinish={(v) => updateProfileMutation.mutate(v)}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
             <Form.Item label="Họ và tên" name="fullName" rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}>
               <Input placeholder="Nhập họ và tên" />
             </Form.Item>
@@ -74,36 +77,33 @@ export const Settings = () => {
               <Input disabled />
             </Form.Item>
           </div>
-          <Form.Item label="Tên gọi khác / Biệt danh (cho AI)" name="otherNames" extra="Các tên cách nhau bởi dấu phẩy">
-            <Input placeholder="Ví dụ: Anh Ba, Khoi..." />
-          </Form.Item>
-          <div className="mb-4 grid grid-cols-1 gap-3 text-sm text-muted-foreground md:grid-cols-3">
-            <div className="rounded-xl bg-muted/40 px-4 py-3 md:col-span-3 border border-border">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Vai trò hiện tại</p>
-              <p className="mt-1 font-semibold text-foreground">
+          <div className="mb-4 grid grid-cols-1 gap-3 text-xs text-muted-foreground sm:grid-cols-3">
+            <div className="rounded-lg bg-muted/40 p-3 sm:col-span-3 border border-border">
+              <p className="font-semibold uppercase tracking-wider text-[11px] text-muted-foreground">Vai trò hiện tại</p>
+              <p className="mt-1 text-sm font-bold text-foreground">
                 {systemRole === 'APP_ADMIN' && role !== 'APP_ADMIN'
                   ? `${role === 'GROUP_ADMIN' ? 'Quản trị nhóm' : 'Thành viên'} + Quản trị hệ thống`
                   : role === 'GROUP_ADMIN' ? 'Quản trị nhóm'
                   : role === 'MEMBER' ? 'Thành viên'
                   : 'Quản trị hệ thống'}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {role === 'GROUP_ADMIN' || role === 'MEMBER' ? getGroupRoleDescription(role) : APP_ADMIN_DESCRIPTION}
               </p>
             </div>
-            <div className="rounded-xl bg-muted/40 px-4 py-3 border border-border">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Nhóm đang chọn</p>
-              <p className="mt-1 font-semibold text-foreground">{activeGroupName || 'Chưa chọn'}</p>
+            <div className="rounded-lg bg-muted/40 p-3 border border-border">
+              <p className="font-semibold uppercase tracking-wider text-[11px] text-muted-foreground">Nhóm đang chọn</p>
+              <p className="mt-1 text-sm font-bold text-foreground">{activeGroupName || 'Chưa chọn'}</p>
             </div>
-            <div className="rounded-xl bg-muted/40 px-4 py-3 border border-border">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Số nhóm đã tham gia</p>
-              <p className="mt-1 font-semibold text-foreground">{memberships.length}</p>
+            <div className="rounded-lg bg-muted/40 p-3 border border-border">
+              <p className="font-semibold uppercase tracking-wider text-[11px] text-muted-foreground">Số nhóm đã tham gia</p>
+              <p className="mt-1 text-sm font-bold text-foreground">{memberships.length}</p>
             </div>
           </div>
           <Button
             type="primary"
             htmlType="submit"
-            icon={<Save size={16} />}
+            icon={<Save size={15} />}
             loading={updateProfileMutation.isPending}
           >
             Lưu thay đổi
@@ -111,10 +111,13 @@ export const Settings = () => {
         </Form>
       </Card>
 
-      <Card title={<div className="flex items-center gap-2"><Shield size={18} /><span>Bảo mật</span></div>} className="shadow-xs border-border rounded-xl glass-card">
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground mb-4">Đăng nhập được xác thực an toàn qua Google OAuth.</p>
-          <Button disabled icon={<Lock size={16} />}>
+      <Card
+        title={<div className="flex items-center gap-2 text-sm font-semibold"><Shield size={16} /><span>Bảo mật tài khoản</span></div>}
+        className="shadow-xs border-border"
+      >
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">Đăng nhập được xác thực an toàn qua Google OAuth.</p>
+          <Button disabled icon={<Lock size={15} />}>
             Quản lý bởi Google
           </Button>
         </div>
@@ -123,26 +126,29 @@ export const Settings = () => {
   );
 
   const groupTab = canViewGroup ? (
-    <div className="space-y-6">
-      <Card title={<div className="flex items-center gap-2"><Building2 size={18} /><span>Thông tin Nhóm làm việc</span></div>} className="shadow-xs border-border rounded-xl glass-card">
+    <div className="space-y-4">
+      <Card
+        title={<div className="flex items-center gap-2 text-sm font-semibold"><Building2 size={16} /><span>Thông tin Nhóm làm việc</span></div>}
+        className="shadow-xs border-border"
+      >
         <Form form={groupForm} layout="vertical" onFinish={(values) => updateGroupMutation.mutate(values)}>
           <Form.Item label="Tên nhóm làm việc" name="groupName" rules={[{ required: true, message: 'Vui lòng nhập tên nhóm' }]}>
             <Input placeholder="Nhập tên nhóm" disabled={!canUpdateGroup} />
           </Form.Item>
-          <div className="mb-4 grid grid-cols-1 gap-3 text-sm text-muted-foreground md:grid-cols-2">
-            <div className="rounded-xl bg-muted/40 px-4 py-3 border border-border">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Nhóm hiện tại</p>
-              <p className="mt-1 font-semibold text-foreground">{activeGroupName || 'Chưa đặt tên'}</p>
+          <div className="mb-4 grid grid-cols-1 gap-3 text-xs text-muted-foreground sm:grid-cols-2">
+            <div className="rounded-lg bg-muted/40 p-3 border border-border">
+              <p className="font-semibold uppercase tracking-wider text-[11px] text-muted-foreground">Nhóm hiện tại</p>
+              <p className="mt-1 text-sm font-bold text-foreground">{activeGroupName || 'Chưa đặt tên'}</p>
             </div>
-            <div className="rounded-xl bg-muted/40 px-4 py-3 border border-border">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Trạng thái</p>
-              <p className="mt-1 font-semibold text-foreground">Đang hoạt động</p>
+            <div className="rounded-lg bg-muted/40 p-3 border border-border">
+              <p className="font-semibold uppercase tracking-wider text-[11px] text-muted-foreground">Trạng thái</p>
+              <p className="mt-1 text-sm font-bold text-foreground">Đang hoạt động</p>
             </div>
           </div>
           <Button
             type="primary"
             htmlType="submit"
-            icon={<Save size={16} />}
+            icon={<Save size={15} />}
             loading={updateGroupMutation.isPending}
             disabled={!canUpdateGroup}
           >
@@ -152,17 +158,20 @@ export const Settings = () => {
       </Card>
     </div>
   ) : (
-    <p className="text-sm text-muted-foreground p-4">Bạn chưa tham gia nhóm nào.</p>
+    <p className="text-xs text-muted-foreground p-4">Bạn chưa tham gia nhóm nào.</p>
   );
 
   const appearanceTab = (
-    <div className="space-y-6">
-      <Card title={<div className="flex items-center gap-2"><Palette size={18} /><span>Giao diện</span></div>} className="shadow-xs border-border rounded-xl glass-card">
-        <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
+    <div className="space-y-4">
+      <Card
+        title={<div className="flex items-center gap-2 text-sm font-semibold"><Palette size={16} /><span>Giao diện</span></div>}
+        className="shadow-xs border-border"
+      >
+        <div className="rounded-lg border border-border bg-card p-4 shadow-xs">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="font-semibold text-foreground">Chế độ tối (Dark Mode)</p>
-              <p className="mt-1 text-sm text-muted-foreground">Chuyển đổi giữa giao diện sáng và tối.</p>
+              <p className="font-semibold text-foreground text-sm">Chế độ tối (Dark Mode)</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Chuyển đổi giữa giao diện sáng và tối.</p>
             </div>
             <Switch
               checked={themeMode === 'dark'}
@@ -171,42 +180,37 @@ export const Settings = () => {
           </div>
 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className={`rounded-xl border p-3 shadow-xs transition-all ${themeMode === 'light' ? 'border-primary ring-2 ring-primary/20 bg-card' : 'border-border bg-muted/30'}`}>
-              <div className="mb-2 flex items-center gap-2 text-foreground">
+            <div className={`rounded-lg border p-3 transition-all ${themeMode === 'light' ? 'border-primary ring-2 ring-primary/20 bg-card' : 'border-border bg-muted/30'}`}>
+              <div className="flex items-center gap-2 text-foreground">
                 <SunMedium size={16} />
                 <span className="text-xs font-semibold">Giao diện sáng</span>
               </div>
             </div>
 
-            <div className={`rounded-xl border p-3 shadow-xs transition-all ${themeMode === 'dark' ? 'border-primary ring-2 ring-primary/20 bg-card' : 'border-border bg-muted/30'}`}>
-              <div className="mb-2 flex items-center gap-2 text-foreground">
+            <div className={`rounded-lg border p-3 transition-all ${themeMode === 'dark' ? 'border-primary ring-2 ring-primary/20 bg-card' : 'border-border bg-muted/30'}`}>
+              <div className="flex items-center gap-2 text-foreground">
                 <MoonStar size={16} />
                 <span className="text-xs font-semibold">Giao diện tối</span>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
             <Sparkles size={14} className="text-primary" />
             <span>Giao diện được áp dụng ngay lập tức trên toàn bộ ứng dụng.</span>
           </div>
         </div>
       </Card>
 
-      <Card title={<div className="flex items-center gap-2"><Bell size={18} /><span>Thông báo</span></div>} className="shadow-xs border-border rounded-xl glass-card">
+      <Card
+        title={<div className="flex items-center gap-2 text-sm font-semibold"><Bell size={16} /><span>Thông báo</span></div>}
+        className="shadow-xs border-border"
+      >
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-semibold text-foreground">Thông báo qua Email</p>
-              <p className="text-sm text-muted-foreground">Nhận thông báo khi có cập nhật trong nhóm</p>
-            </div>
-            <Switch defaultChecked />
-          </div>
-          <Divider className="my-2" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-foreground">Nhắc nhở sự kiện & lịch trình</p>
-              <p className="text-sm text-muted-foreground">Nhận thông báo khi tới hạn sự kiện</p>
+              <p className="font-semibold text-foreground text-sm">Thông báo qua Email</p>
+              <p className="text-xs text-muted-foreground">Nhận thông báo khi có cập nhật trong nhóm</p>
             </div>
             <Switch defaultChecked />
           </div>
@@ -227,6 +231,7 @@ export const Settings = () => {
     <div className="space-y-4 max-w-5xl animate-in fade-in duration-300">
       <header>
         <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight">Cài Đặt</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Quản lý hồ sơ, cấu hình nhóm và giao diện ứng dụng</p>
       </header>
 
       <Tabs items={tabItems} className="settings-tabs" />

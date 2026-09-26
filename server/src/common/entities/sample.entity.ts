@@ -1,15 +1,19 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Group } from './group.entity';
 import { Category } from './category.entity';
 
 export enum SampleStatus {
+  AVAILABLE = 'AVAILABLE',
+  IN_USE = 'IN_USE',
+  MAINTENANCE = 'MAINTENANCE',
+  ARCHIVED = 'ARCHIVED',
+  DISPOSED = 'DISPOSED',
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
-  ARCHIVED = 'ARCHIVED',
 }
 
-@Entity('sm_samples')
+@Entity('sws_samples')
 export class Sample extends BaseEntity {
   @Column({ length: 255 })
   name: string;
@@ -23,13 +27,15 @@ export class Sample extends BaseEntity {
   @Column({ length: 100, nullable: true })
   type?: string;
 
+  @Index()
   @Column({
     type: 'enum',
     enum: SampleStatus,
-    default: SampleStatus.ACTIVE,
+    default: SampleStatus.AVAILABLE,
   })
   status: SampleStatus;
 
+  @Index()
   @Column({ type: 'uuid', nullable: true })
   categoryId?: string;
 
@@ -37,15 +43,9 @@ export class Sample extends BaseEntity {
   @JoinColumn({ name: 'categoryId' })
   category?: Category;
 
+  @Index()
   @Column({ type: 'uuid' })
   groupId: string;
-
-  get familyId(): string {
-    return this.groupId;
-  }
-  set familyId(val: string) {
-    this.groupId = val;
-  }
 
   @ManyToOne(() => Group, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'groupId' })
@@ -59,12 +59,4 @@ export class Sample extends BaseEntity {
 
   @Column({ type: 'uuid', nullable: true })
   createdByUserId?: string;
-
-  // Compatibility computed property
-  get currentValue(): number {
-    return 0;
-  }
 }
-
-// Alias for compatibility
-export { Sample as Asset, SampleStatus as AssetStatus };

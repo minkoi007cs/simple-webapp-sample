@@ -1,7 +1,5 @@
 import api from './client';
 
-export type ExpenseEntryType = 'INCOME' | 'EXPENSE';
-
 export interface Category {
   id: string;
   name: string;
@@ -11,12 +9,6 @@ export interface Category {
   isDefault?: boolean;
 }
 
-export const expenseEntryTypeLabels: Record<ExpenseEntryType, string> = {
-  INCOME: 'Income',
-  EXPENSE: 'Expense',
-};
-
-/** Leaf category indicator: has parent */
 export const isLeafCategory = (category?: Pick<Category, 'parentId'> | null) =>
   !!category?.parentId;
 
@@ -40,20 +32,9 @@ export const buildCategoryPathLabel = (
   return labels.join(' / ');
 };
 
-export type CategoryDeleteUsage = {
-  assetCount: number;
-  expenseCount: number;
-  childCategoryCount: number;
-};
-
 export const categoryApi = {
   findAll: () => api.get<Category[]>('/categories'),
   create: (data: Partial<Category>) => api.post<Category>('/categories', data),
-  update: (id: string, data: Partial<Category>) => api.put<Category>(`/categories/${id}`, data),
-  getUsageBeforeDelete: (id: string) =>
-    api.get<CategoryDeleteUsage>(`/categories/${id}/usage`).then((res) => res.data),
-  delete: (id: string, options?: { reassignTo?: string }) =>
-    api.delete(`/categories/${id}`, {
-      params: options?.reassignTo ? { reassignTo: options.reassignTo } : {},
-    }),
+  update: (id: string, data: Partial<Category>) => api.patch<Category>(`/categories/${id}`, data),
+  delete: (id: string) => api.delete(`/categories/${id}`),
 };

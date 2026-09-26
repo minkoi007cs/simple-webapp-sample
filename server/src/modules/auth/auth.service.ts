@@ -234,10 +234,6 @@ export class AuthService {
     return this.getSessionProfile(userId, groupId);
   }
 
-  async switchActiveFamily(userId: string, familyId: string) {
-    return this.switchActiveGroup(userId, familyId);
-  }
-
   async previewInvite(token: string) {
     const invite = await this.inviteRepository.findOne({
       where: { token },
@@ -253,7 +249,6 @@ export class AuthService {
     return {
       email: invite.email,
       groupName: invite.group?.name ?? null,
-      familyName: invite.group?.name ?? null,
       role: invite.role?.code ?? null,
       isExpired,
       status: invite.status,
@@ -331,15 +326,9 @@ export class AuthService {
     return memberships.map((membership) => ({
       groupId: membership.groupId,
       groupName: membership.group?.name,
-      familyId: membership.groupId,
-      familyName: membership.group?.name,
       role: membership.role?.code,
       status: membership.status,
     }));
-  }
-
-  async listUserFamilies(userId: string) {
-    return this.listUserGroups(userId);
   }
 
   private async createDefaultGroupForUser(user: User) {
@@ -358,10 +347,6 @@ export class AuthService {
 
     user.lastActiveGroupId = group.id;
     await this.userRepository.save(user);
-  }
-
-  private async createDefaultFamilyForUser(user: User) {
-    return this.createDefaultGroupForUser(user);
   }
 
   private pickActiveGroupId(memberships: GroupUser[], ...preferredGroupIds: Array<string | null | undefined>): string | null {
@@ -384,7 +369,6 @@ export class AuthService {
       sub: user.id,
       systemRole: user.systemRole,
       activeGroupId,
-      activeFamilyId: activeGroupId,
       activeRole: activeMembership?.role?.code ?? (user.systemRole === SystemRole.APP_ADMIN ? UserRole.APP_ADMIN : null),
     };
 
@@ -398,14 +382,10 @@ export class AuthService {
         systemRole: user.systemRole,
         role: activeMembership?.role?.code ?? (user.systemRole === SystemRole.APP_ADMIN ? UserRole.APP_ADMIN : null),
         groupId: activeGroupId,
-        familyId: activeGroupId,
         memberships: memberships.map((membership) => ({
           groupId: membership.groupId,
           groupName: membership.group?.name,
           groupStatus: membership.group?.status,
-          familyId: membership.groupId,
-          familyName: membership.group?.name,
-          familyStatus: membership.group?.status,
           role: membership.role?.code,
         })),
       },
@@ -447,10 +427,6 @@ export class AuthService {
     await this.userRepository.save(user);
 
     return this.getSessionProfile(userId, group.id);
-  }
-
-  async createNewFamily(userId: string, name?: string) {
-    return this.createNewGroup(userId, name);
   }
 
   buildInviteToken() {

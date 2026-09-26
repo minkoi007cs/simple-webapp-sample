@@ -10,35 +10,26 @@ export enum InviteStatus {
   CANCELLED = 'CANCELLED',
 }
 
-@Entity('sm_invites')
+@Entity('sws_invites')
 @Index(['token'], { unique: true })
 export class Invite {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column()
   email: string;
 
   @Column()
   token: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   groupId: string;
-
-  get familyId(): string {
-    return this.groupId;
-  }
-  set familyId(val: string) {
-    this.groupId = val;
-  }
 
   @ManyToOne(() => Group, (group) => group.invites, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'groupId' })
   group: Group;
-
-  get family(): Group {
-    return this.group;
-  }
 
   @Column()
   roleId: string;

@@ -153,7 +153,7 @@ export const AdminPanel = () => {
         fullName: member.fullName,
         email: member.email,
         systemRole: member.systemRole,
-        role: member.role === 'GROUP_ADMIN' || (member.role as string) === 'FAMILY_ADMIN' ? 'GROUP_ADMIN' : 'MEMBER',
+        role: member.role === 'GROUP_ADMIN' ? 'GROUP_ADMIN' : 'MEMBER',
       })),
     )
   ), [groups]);
@@ -206,7 +206,7 @@ export const AdminPanel = () => {
       key: 'user',
       render: (_, record) => (
         <div>
-          <div className="font-semibold text-foreground">{record.fullName || 'Chưa đặt tên'}</div>
+          <div className="font-semibold text-foreground text-sm">{record.fullName || 'Chưa đặt tên'}</div>
           <div className="text-xs text-muted-foreground">{record.email}</div>
         </div>
       ),
@@ -236,8 +236,8 @@ export const AdminPanel = () => {
         <div className="flex flex-wrap gap-1.5">
           {record.memberships.length > 0
             ? record.memberships.map((membership) => (
-              <Tag key={`${record.id}-${membership.groupId || membership.familyId}`}>
-                {membership.groupName || membership.familyName} · {membership.role === 'GROUP_ADMIN' || (membership.role as string) === 'FAMILY_ADMIN' ? 'Admin' : 'Member'}
+              <Tag key={`${record.id}-${membership.groupId}`}>
+                {membership.groupName} · {membership.role === 'GROUP_ADMIN' ? 'Admin' : 'Member'}
               </Tag>
             ))
             : <span className="text-xs text-muted-foreground">Chưa tham gia nhóm nào</span>}
@@ -252,7 +252,7 @@ export const AdminPanel = () => {
       key: 'group',
       render: (_, record) => (
         <div>
-          <div className="font-semibold text-foreground">{record.groupName}</div>
+          <div className="font-semibold text-foreground text-sm">{record.groupName}</div>
           <div className="text-xs text-muted-foreground">{record.groupStatus === 'ACTIVE' ? 'Hoạt động' : 'Tạm dừng'}</div>
         </div>
       ),
@@ -262,7 +262,7 @@ export const AdminPanel = () => {
       key: 'member',
       render: (_, record) => (
         <div>
-          <div className="font-semibold text-foreground">{record.fullName || 'Chưa đặt tên'}</div>
+          <div className="font-semibold text-foreground text-sm">{record.fullName || 'Chưa đặt tên'}</div>
           <div className="text-xs text-muted-foreground">{record.email}</div>
         </div>
       ),
@@ -302,11 +302,11 @@ export const AdminPanel = () => {
     {
       title: 'Thao tác',
       key: 'action',
-      width: 100,
+      width: 90,
       render: (_, record) => (
         <Popconfirm
           title="Xóa thành viên khỏi nhóm"
-          description={`Bạn có chắc chắn muốn xóa "${record.fullName || record.email}" khỏi nhóm "${record.groupName}"?`}
+          description={`Bạn có chắc muốn xóa "${record.fullName || record.email}" khỏi nhóm "${record.groupName}"?`}
           okText="Xóa"
           cancelText="Hủy"
           okButtonProps={{ danger: true, loading: removeMemberMutation.isPending }}
@@ -318,71 +318,67 @@ export const AdminPanel = () => {
             size="small"
             icon={<UserMinus size={14} />}
             title="Xóa khỏi nhóm"
-          >
-            Xóa
-          </Button>
+          />
         </Popconfirm>
       ),
     },
   ];
 
   return (
-    <div className="space-y-4 lg:space-y-5">
+    <div className="space-y-4 lg:space-y-5 animate-in fade-in duration-300">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-foreground font-sans">Quản Trị Hệ Thống</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight">Quản Trị Hệ Thống</h1>
+        <p className="mt-0.5 text-xs lg:text-sm text-muted-foreground">
           Quản lý toàn bộ nhóm làm việc, thành viên và phân quyền quản trị viên hệ thống (APP_ADMIN).
         </p>
       </div>
 
       <Row gutter={[16, 16]}>
         <Col xs={24} md={8}>
-          <Card className="glass-card" loading={statsLoading}>
+          <Card className="shadow-xs border-border" loading={statsLoading}>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-600 border border-purple-500/20">
-                <ShieldCheck size={18} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 border border-purple-500/20 shrink-0">
+                <ShieldCheck size={20} />
               </div>
               <div>
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">Tổng người dùng</div>
-                <div className="text-2xl font-bold text-foreground">{stats?.totalUsers ?? 0}</div>
+                <div className="text-2xl font-bold text-foreground tracking-tight">{stats?.totalUsers ?? 0}</div>
               </div>
             </div>
           </Card>
         </Col>
         <Col xs={24} md={8}>
-          <Card className="glass-card" loading={statsLoading}>
+          <Card className="shadow-xs border-border" loading={statsLoading}>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                <Building2 size={18} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 shrink-0">
+                <Building2 size={20} />
               </div>
               <div>
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">Tổng số nhóm</div>
-                <div className="text-2xl font-bold text-foreground">{stats?.totalGroups ?? stats?.totalFamilies ?? 0}</div>
+                <div className="text-2xl font-bold text-foreground tracking-tight">{stats?.totalGroups ?? 0}</div>
               </div>
             </div>
           </Card>
         </Col>
         <Col xs={24} md={8}>
-          <Card className="glass-card" loading={statsLoading}>
+          <Card className="shadow-xs border-border" loading={statsLoading}>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                <Users size={18} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shrink-0">
+                <Users size={20} />
               </div>
               <div>
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">Tư cách thành viên</div>
-                <div className="text-2xl font-bold text-foreground">{stats?.totalMemberships ?? 0}</div>
+                <div className="text-2xl font-bold text-foreground tracking-tight">{stats?.totalMemberships ?? 0}</div>
               </div>
             </div>
           </Card>
         </Col>
       </Row>
 
-      <Card className="glass-card">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <Typography.Title level={4} className="!mb-1">Phân quyền hệ thống</Typography.Title>
-            <Typography.Text type="secondary">Chỉ tài khoản APP_ADMIN mới có thể cấp hoặc thu hồi quyền quản trị hệ thống.</Typography.Text>
-          </div>
+      <Card className="shadow-xs border-border">
+        <div className="mb-3">
+          <Typography.Title level={5} className="!mb-0.5">Phân quyền hệ thống</Typography.Title>
+          <Typography.Text type="secondary" className="text-xs">Chỉ tài khoản APP_ADMIN mới có thể cấp hoặc thu hồi quyền quản trị hệ thống.</Typography.Text>
         </div>
         <Table
           rowKey="id"
@@ -392,26 +388,26 @@ export const AdminPanel = () => {
           pagination={false}
           onScroll={onAdminUserTableScroll}
           scroll={{ x: 760, y: 360 }}
-          size="small"
+          size="middle"
         />
       </Card>
 
-      <Card className="glass-card">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <Card className="shadow-xs border-border">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <Typography.Title level={4} className="!mb-1">Danh sách nhóm và thành viên</Typography.Title>
-            <Typography.Text type="secondary">Quản lý các nhóm, chỉnh sửa tên, phân bổ thành viên và trạng thái hoạt động.</Typography.Text>
+            <Typography.Title level={5} className="!mb-0.5">Danh sách nhóm và thành viên</Typography.Title>
+            <Typography.Text type="secondary" className="text-xs">Quản lý các nhóm, chỉnh sửa tên, phân bổ thành viên và trạng thái hoạt động.</Typography.Text>
           </div>
           <div className="flex items-center gap-2">
             <Button
               type="primary"
-              icon={<Plus size={14} />}
+              icon={<Plus size={15} />}
               onClick={() => setIsCreateGroupModalOpen(true)}
             >
               Tạo nhóm mới
             </Button>
             <Button
-              icon={<UserPlus size={14} />}
+              icon={<UserPlus size={15} />}
               onClick={() => setIsAddMemberModalOpen(true)}
             >
               Gán thành viên
@@ -421,17 +417,17 @@ export const AdminPanel = () => {
 
         <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
           {(groups ?? []).map((group: AdminGroup) => (
-            <div key={group.id} className="rounded-2xl border border-border bg-card p-4">
+            <div key={group.id} className="rounded-xl border border-border bg-card p-3.5 shadow-xs">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-foreground">{group.name}</p>
+                  <p className="font-semibold text-foreground text-sm">{group.name}</p>
                   <p className="text-xs text-muted-foreground">{group.members.length} thành viên</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <Select
                     size="small"
                     value={group.status}
-                    className="w-32"
+                    className="w-28"
                     loading={updateGroupStatusMutation.isPending}
                     onChange={(status) => updateGroupStatusMutation.mutate({ groupId: group.id, status })}
                     options={[
@@ -441,6 +437,7 @@ export const AdminPanel = () => {
                   />
                   <Button
                     size="small"
+                    type="text"
                     icon={<Pencil size={13} />}
                     onClick={() => {
                       setEditingGroup(group);
@@ -471,6 +468,7 @@ export const AdminPanel = () => {
                     <Button
                       size="small"
                       danger
+                      type="text"
                       icon={<Trash2 size={13} />}
                       title="Xóa nhóm"
                     />
@@ -481,7 +479,7 @@ export const AdminPanel = () => {
           ))}
         </div>
 
-        <Divider />
+        <Divider className="my-4" />
 
         <Table
           rowKey="key"
@@ -491,14 +489,14 @@ export const AdminPanel = () => {
           pagination={false}
           onScroll={onAdminMemberTableScroll}
           scroll={{ x: 860, y: 400 }}
-          size="small"
+          size="middle"
         />
       </Card>
 
       {/* Modal Create Group */}
       <Modal
         title={
-          <div className="flex items-center gap-2 text-base font-bold text-foreground">
+          <div className="flex items-center gap-2 text-base font-semibold text-foreground">
             <Building2 size={18} className="text-primary" />
             <span>Tạo nhóm làm việc mới</span>
           </div>
@@ -506,7 +504,6 @@ export const AdminPanel = () => {
         open={isCreateGroupModalOpen}
         onCancel={() => setIsCreateGroupModalOpen(false)}
         footer={null}
-        centered
         destroyOnClose
       >
         <p className="text-xs text-muted-foreground mb-4">
@@ -522,7 +519,7 @@ export const AdminPanel = () => {
             label="Tên nhóm"
             rules={[{ required: true, message: 'Vui lòng nhập tên nhóm' }]}
           >
-            <Input placeholder="Ví dụ: Nhóm Thiết Kế Mẫu A" size="large" />
+            <Input placeholder="Ví dụ: Nhóm Thiết Kế Mẫu A" />
           </Form.Item>
           <Form.Item
             name="adminUserId"
@@ -532,7 +529,6 @@ export const AdminPanel = () => {
           >
             <Select
               placeholder="Chọn người dùng làm Quản trị nhóm"
-              size="large"
               allowClear
               showSearch
               filterOption={(input, option) =>
@@ -544,7 +540,7 @@ export const AdminPanel = () => {
               }))}
             />
           </Form.Item>
-          <div className="flex justify-end gap-2 mt-6">
+          <div className="flex justify-end gap-2 mt-5">
             <Button onClick={() => setIsCreateGroupModalOpen(false)}>Hủy</Button>
             <Button
               type="primary"
@@ -560,7 +556,7 @@ export const AdminPanel = () => {
       {/* Modal Assign Member */}
       <Modal
         title={
-          <div className="flex items-center gap-2 text-base font-bold text-foreground">
+          <div className="flex items-center gap-2 text-base font-semibold text-foreground">
             <UserPlus size={18} className="text-primary" />
             <span>Gán người dùng vào nhóm</span>
           </div>
@@ -568,7 +564,6 @@ export const AdminPanel = () => {
         open={isAddMemberModalOpen}
         onCancel={() => setIsAddMemberModalOpen(false)}
         footer={null}
-        centered
         destroyOnClose
       >
         <p className="text-xs text-muted-foreground mb-4">
@@ -587,7 +582,6 @@ export const AdminPanel = () => {
           >
             <Select
               placeholder="Chọn nhóm"
-              size="large"
               showSearch
               filterOption={(input, option) =>
                 (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
@@ -605,7 +599,6 @@ export const AdminPanel = () => {
           >
             <Select
               placeholder="Chọn người dùng"
-              size="large"
               showSearch
               filterOption={(input, option) =>
                 (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
@@ -622,14 +615,13 @@ export const AdminPanel = () => {
             rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
           >
             <Select
-              size="large"
               options={[
                 { value: 'GROUP_ADMIN', label: 'Quản trị nhóm' },
                 { value: 'MEMBER', label: 'Thành viên' },
               ]}
             />
           </Form.Item>
-          <div className="flex justify-end gap-2 mt-6">
+          <div className="flex justify-end gap-2 mt-5">
             <Button onClick={() => setIsAddMemberModalOpen(false)}>Hủy</Button>
             <Button
               type="primary"
@@ -645,7 +637,7 @@ export const AdminPanel = () => {
       {/* Modal Edit Group Name */}
       <Modal
         title={
-          <div className="flex items-center gap-2 text-base font-bold text-foreground">
+          <div className="flex items-center gap-2 text-base font-semibold text-foreground">
             <Pencil size={18} className="text-primary" />
             <span>Đổi tên nhóm làm việc</span>
           </div>
@@ -653,7 +645,6 @@ export const AdminPanel = () => {
         open={editingGroup !== null}
         onCancel={() => setEditingGroup(null)}
         footer={null}
-        centered
         destroyOnClose
       >
         <Form
@@ -670,9 +661,9 @@ export const AdminPanel = () => {
             label="Tên nhóm"
             rules={[{ required: true, message: 'Vui lòng nhập tên nhóm' }]}
           >
-            <Input placeholder="Nhập tên nhóm mới" size="large" />
+            <Input placeholder="Nhập tên nhóm mới" />
           </Form.Item>
-          <div className="flex justify-end gap-2 mt-6">
+          <div className="flex justify-end gap-2 mt-5">
             <Button onClick={() => setEditingGroup(null)}>Hủy</Button>
             <Button
               type="primary"

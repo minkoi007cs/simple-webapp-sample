@@ -8,7 +8,7 @@ export enum GroupStatus {
   INACTIVE = 'INACTIVE',
 }
 
-@Entity('sm_groups')
+@Entity('sws_groups')
 export class Group extends BaseEntity {
   @Column({ length: 255 })
   name: string;
@@ -32,6 +32,3 @@ export class Group extends BaseEntity {
   @OneToMany(() => Invite, (invite) => invite.group)
   invites: Invite[];
 }
-
-// Alias for compatibility
-export { Group as Family, GroupStatus as FamilyStatus };
