@@ -4,8 +4,7 @@ import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ActiveGroupGuard } from '../../common/guards/active-group.guard';
 import { PermissionGuard } from '../../common/guards/permission.guard';
-import { RequirePermission } from '../../common/decorators/permission.decorator';
-import { AppModule, PermissionAction } from '../../common/entities/permission.entity';
+import { RequirePermission, AppModule, PermissionAction } from '../../common/decorators/permission.decorator';
 import { GetUser } from '../../common/decorators/get-user.decorator';
 import { User } from '../../common/entities/user.entity';
 

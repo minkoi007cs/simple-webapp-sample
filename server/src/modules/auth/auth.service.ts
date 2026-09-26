@@ -9,7 +9,7 @@ import { User, SystemRole, UserRole } from '../../common/entities/user.entity';
 import { Group, GroupStatus } from '../../common/entities/group.entity';
 import { GroupUser, GroupUserStatus } from '../../common/entities/group-user.entity';
 import { Invite, InviteStatus } from '../../common/entities/invite.entity';
-import { PermissionService } from '../permission/permission.service';
+import { Role } from '../../common/entities/role.entity';
 
 interface OAuthProfile {
   email: string;
@@ -39,8 +39,23 @@ export class AuthService {
     private groupUserRepository: Repository<GroupUser>,
     @InjectRepository(Invite)
     private inviteRepository: Repository<Invite>,
-    private permissionService: PermissionService,
+    @InjectRepository(Role)
+    private roleRepository: Repository<Role>,
   ) {}
+
+  private async getRole(roleCode: UserRole): Promise<Role> {
+    let role = await this.roleRepository.findOne({ where: { code: roleCode } });
+    if (!role) {
+      role = await this.roleRepository.save(
+        this.roleRepository.create({
+          code: roleCode,
+          name: roleCode,
+          isTemplate: true,
+        }),
+      );
+    }
+    return role;
+  }
 
   getAuthConfig() {
     const supabaseUrl =
@@ -68,7 +83,6 @@ export class AuthService {
     let avatarUrl: string | null = null;
     let googleId = '';
 
-    // 1. First attempt instant JWT decoding (0ms network latency)
     try {
       const decoded: any = this.jwtService.decode(token);
       if (decoded && typeof decoded === 'object') {
@@ -82,7 +96,6 @@ export class AuthService {
       this.logger.warn(`Could not decode token locally: ${decodeErr?.message}`);
     }
 
-    // 2. Fallback to Supabase remote verification if local decode didn't yield an email
     if (!email) {
       try {
         const supabase = this.getSupabase();
@@ -146,7 +159,6 @@ export class AuthService {
         await this.userRepository.save(user);
       }
     }
-
 
     let memberships = await this.groupUserRepository.find({
       where: { userId: user.id, status: GroupUserStatus.ACTIVE },
@@ -222,7 +234,6 @@ export class AuthService {
     return this.getSessionProfile(userId, groupId);
   }
 
-  // Alias for backward compat
   async switchActiveFamily(userId: string, familyId: string) {
     return this.switchActiveGroup(userId, familyId);
   }
@@ -327,13 +338,12 @@ export class AuthService {
     }));
   }
 
-  // Alias for backward compat
   async listUserFamilies(userId: string) {
     return this.listUserGroups(userId);
   }
 
   private async createDefaultGroupForUser(user: User) {
-    const groupAdminRole = await this.permissionService.getRoleByCode(UserRole.GROUP_ADMIN);
+    const groupAdminRole = await this.getRole(UserRole.GROUP_ADMIN);
 
     const group = await this.groupRepository.save(this.groupRepository.create({
       name: user.fullName ? `Nhóm của ${user.fullName}` : 'Nhóm của tôi',
@@ -350,7 +360,6 @@ export class AuthService {
     await this.userRepository.save(user);
   }
 
-  // Backward compat alias
   private async createDefaultFamilyForUser(user: User) {
     return this.createDefaultGroupForUser(user);
   }
@@ -375,7 +384,7 @@ export class AuthService {
       sub: user.id,
       systemRole: user.systemRole,
       activeGroupId,
-      activeFamilyId: activeGroupId, // Backward-compat
+      activeFamilyId: activeGroupId,
       activeRole: activeMembership?.role?.code ?? (user.systemRole === SystemRole.APP_ADMIN ? UserRole.APP_ADMIN : null),
     };
 
@@ -389,7 +398,7 @@ export class AuthService {
         systemRole: user.systemRole,
         role: activeMembership?.role?.code ?? (user.systemRole === SystemRole.APP_ADMIN ? UserRole.APP_ADMIN : null),
         groupId: activeGroupId,
-        familyId: activeGroupId, // Backward-compat
+        familyId: activeGroupId,
         memberships: memberships.map((membership) => ({
           groupId: membership.groupId,
           groupName: membership.group?.name,
@@ -416,7 +425,7 @@ export class AuthService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new UnauthorizedException();
 
-    const groupAdminRole = await this.permissionService.getRoleByCode(UserRole.GROUP_ADMIN);
+    const groupAdminRole = await this.getRole(UserRole.GROUP_ADMIN);
     const groupName = name?.trim() || (user.fullName ? `Nhóm của ${user.fullName}` : 'Nhóm của tôi');
 
     const group = await this.groupRepository.save(
@@ -440,7 +449,6 @@ export class AuthService {
     return this.getSessionProfile(userId, group.id);
   }
 
-  // Alias
   async createNewFamily(userId: string, name?: string) {
     return this.createNewGroup(userId, name);
   }

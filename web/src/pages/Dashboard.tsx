@@ -7,26 +7,15 @@ import {
 import { Link } from 'react-router-dom';
 import {
   Package,
-  FolderArchive,
-  CalendarDays,
   Users,
   ArrowRight,
-  PlaneTakeoff,
-  ChevronRight,
+  Tags,
 } from 'lucide-react';
 import api from '../api/client';
 import { cn } from '../utils/cn';
 import { useSession } from '../components/auth/SessionProvider';
-import dayjs from 'dayjs';
 
 const PIE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316'];
-
-const eventTypeMeta: Record<string, { label: string; color: string }> = {
-  PAYMENT: { label: 'Thanh toán', color: 'orange' },
-  MAINTENANCE: { label: 'Bảo quản', color: 'blue' },
-  REMINDER: { label: 'Nhắc nhở', color: 'purple' },
-  EVENT: { label: 'Sự kiện', color: 'green' },
-};
 
 export const Dashboard = () => {
   const { systemRole, canAccess } = useSession();
@@ -70,38 +59,8 @@ export const Dashboard = () => {
         </div>
       </header>
 
-      {/* Go US F4 Portal Banner */}
-      <Link
-        to="/gous"
-        className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 p-4 text-white shadow-xs hover:shadow-sm transition-all border border-zinc-700/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 block"
-      >
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center text-primary-foreground shrink-0 border border-white/15 group-hover:scale-105 transition-transform">
-            <PlaneTakeoff size={20} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/20">
-                US Immigration
-              </span>
-              <span className="text-xs text-zinc-400 hidden sm:inline">
-                • Hồ sơ & Tiến độ NVC
-              </span>
-            </div>
-            <h2 className="text-base font-bold text-white mt-0.5 tracking-tight">
-              Cổng quản lý hồ sơ Di trú Mỹ (/gous)
-            </h2>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-white group-hover:text-zinc-200 shrink-0 bg-white/10 px-3 py-1.5 rounded-lg border border-white/15 backdrop-blur-sm self-start sm:self-auto">
-          <span>Mở Cổng</span>
-          <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-        </div>
-      </Link>
-
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
         <KpiCard
           label="Tổng số Mẫu (Samples)"
           primary={stats?.totalSampleCount || 0}
@@ -119,20 +78,12 @@ export const Dashboard = () => {
           to="/members"
         />
         <KpiCard
-          label="Tài liệu lưu trữ"
-          primary={stats?.totalDocumentCount || 0}
-          secondary="Tệp đính kèm & hồ sơ"
-          icon={FolderArchive}
+          label="Phân loại danh mục"
+          primary={samplesByCategory.length}
+          secondary="Nhóm phân loại đang dùng"
+          icon={Tags}
           accent="amber"
-          to="/documents"
-        />
-        <KpiCard
-          label="Sự kiện sắp tới (7 ngày)"
-          primary={stats?.upcomingEvents?.length || 0}
-          secondary="Lịch trình & thông báo"
-          icon={CalendarDays}
-          accent="purple"
-          to="/calendar"
+          to="/categories"
         />
       </div>
 
@@ -212,90 +163,6 @@ export const Dashboard = () => {
               <EmptyState icon={Package} message="Chưa có mẫu nào" compact />
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Upcoming Events & Recent Documents */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
-        <div className="glass-card p-4 lg:p-5">
-          <div className="flex justify-between items-center mb-3">
-            <div>
-              <h2 className="font-bold text-base lg:text-lg text-foreground">Sự Kiện Lịch Trình</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Kế hoạch trong 7 ngày tới</p>
-            </div>
-            <Link to="/calendar" className="text-xs text-primary hover:underline flex items-center gap-1">
-              Xem lịch <ArrowRight size={12} />
-            </Link>
-          </div>
-          {stats?.upcomingEvents?.length > 0 ? (
-            <div className="space-y-2.5">
-              {stats.upcomingEvents.map((event: any) => {
-                const meta = eventTypeMeta[event.type] || eventTypeMeta.EVENT;
-                return (
-                  <div key={event.id} className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-card border border-border">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-500/20">
-                        <CalendarDays size={16} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-foreground text-sm truncate">{event.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {dayjs(event.startDate).format('DD/MM/YYYY HH:mm')}
-                          {event.location ? ` • ${event.location}` : ''}
-                        </p>
-                      </div>
-                    </div>
-                    <Tag color={meta.color} className="shrink-0 text-[11px]">{meta.label}</Tag>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <EmptyState icon={CalendarDays} message="Không có sự kiện sắp tới" compact />
-          )}
-        </div>
-
-        <div className="glass-card p-4 lg:p-5">
-          <div className="flex justify-between items-center mb-3">
-            <div>
-              <h2 className="font-bold text-base lg:text-lg text-foreground">Tài Liệu Mới Lưu Trữ</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Tệp đính kèm và hợp đồng gần nhất</p>
-            </div>
-            <Link to="/documents" className="text-xs text-primary hover:underline flex items-center gap-1">
-              Tất cả tài liệu <ArrowRight size={12} />
-            </Link>
-          </div>
-          {stats?.recentDocuments?.length > 0 ? (
-            <div className="space-y-2.5">
-              {stats.recentDocuments.map((doc: any) => (
-                <div key={doc.id} className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-card border border-border">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0 border border-amber-500/20">
-                      <FolderArchive size={16} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-foreground text-sm truncate">{doc.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {doc.fileType || 'Tài liệu'} • {dayjs(doc.createdAt).format('DD/MM/YYYY')}
-                      </p>
-                    </div>
-                  </div>
-                  {doc.url && (
-                    <a
-                      href={doc.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-primary hover:underline font-medium shrink-0"
-                    >
-                      Mở tệp
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState icon={FolderArchive} message="Chưa có tài liệu nào" compact />
-          )}
         </div>
       </div>
     </div>

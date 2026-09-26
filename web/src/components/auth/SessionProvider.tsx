@@ -13,46 +13,27 @@ import {
 type ModuleKey =
   | 'DASHBOARD'
   | 'CATEGORY'
-  | 'CALENDAR'
   | 'ASSET'
   | 'SAMPLE'
-  | 'TRANSACTION'
   | 'USER'
   | 'GROUP'
   | 'FAMILY'
-  | 'PERMISSION'
-  | 'ADMIN'
-  | 'GOUS'
-  | 'DOCUMENT';
+  | 'ADMIN';
 
 type PermissionAction = 'view' | 'create' | 'update' | 'delete';
 
 type PermissionMatrix = Record<string, Partial<Record<ModuleKey, PermissionAction[]>>>;
 
-const SYSTEM_SCOPED_MODULES = new Set<ModuleKey>(['ADMIN', 'PERMISSION']);
-const GROUP_SCOPED_MODULES = new Set<ModuleKey>([
-  'GROUP',
-  'FAMILY',
-  'USER',
-  'DASHBOARD',
-  'CATEGORY',
-  'CALENDAR',
-  'ASSET',
-  'SAMPLE',
-  'TRANSACTION',
-  'GOUS',
-  'DOCUMENT',
-]);
-
 const ROLE_PERMISSIONS: PermissionMatrix = {
   APP_ADMIN: {
-    ADMIN: ['view', 'update'],
-    GROUP: ['view', 'update'],
-    FAMILY: ['view', 'update'],
-    USER: ['view', 'update'],
-    PERMISSION: ['view', 'create', 'update', 'delete'],
-    GOUS: ['view', 'create', 'update', 'delete'],
-    DOCUMENT: ['view', 'create', 'update', 'delete'],
+    ADMIN: ['view', 'create', 'update', 'delete'],
+    GROUP: ['view', 'create', 'update', 'delete'],
+    FAMILY: ['view', 'create', 'update', 'delete'],
+    USER: ['view', 'create', 'update', 'delete'],
+    DASHBOARD: ['view'],
+    CATEGORY: ['view', 'create', 'update', 'delete'],
+    SAMPLE: ['view', 'create', 'update', 'delete'],
+    ASSET: ['view', 'create', 'update', 'delete'],
   },
   GROUP_ADMIN: {
     GROUP: ['view', 'update'],
@@ -60,12 +41,8 @@ const ROLE_PERMISSIONS: PermissionMatrix = {
     USER: ['view', 'create', 'update', 'delete'],
     DASHBOARD: ['view'],
     CATEGORY: ['view', 'create', 'update', 'delete'],
-    CALENDAR: ['view', 'create', 'update', 'delete'],
-    ASSET: ['view', 'create', 'update', 'delete'],
     SAMPLE: ['view', 'create', 'update', 'delete'],
-    TRANSACTION: ['view', 'create', 'update', 'delete'],
-    GOUS: ['view', 'create', 'update', 'delete'],
-    DOCUMENT: ['view', 'create', 'update', 'delete'],
+    ASSET: ['view', 'create', 'update', 'delete'],
   },
   FAMILY_ADMIN: {
     GROUP: ['view', 'update'],
@@ -73,12 +50,8 @@ const ROLE_PERMISSIONS: PermissionMatrix = {
     USER: ['view', 'create', 'update', 'delete'],
     DASHBOARD: ['view'],
     CATEGORY: ['view', 'create', 'update', 'delete'],
-    CALENDAR: ['view', 'create', 'update', 'delete'],
-    ASSET: ['view', 'create', 'update', 'delete'],
     SAMPLE: ['view', 'create', 'update', 'delete'],
-    TRANSACTION: ['view', 'create', 'update', 'delete'],
-    GOUS: ['view', 'create', 'update', 'delete'],
-    DOCUMENT: ['view', 'create', 'update', 'delete'],
+    ASSET: ['view', 'create', 'update', 'delete'],
   },
   MEMBER: {
     GROUP: ['view'],
@@ -86,12 +59,8 @@ const ROLE_PERMISSIONS: PermissionMatrix = {
     USER: ['view'],
     DASHBOARD: ['view'],
     CATEGORY: ['view'],
-    CALENDAR: ['view', 'create', 'update', 'delete'],
-    ASSET: ['view', 'create', 'update', 'delete'],
     SAMPLE: ['view', 'create', 'update', 'delete'],
-    TRANSACTION: ['view', 'create', 'update', 'delete'],
-    GOUS: ['view', 'create', 'update', 'delete'],
-    DOCUMENT: ['view', 'create', 'update', 'delete'],
+    ASSET: ['view', 'create', 'update', 'delete'],
   },
 };
 
@@ -211,20 +180,11 @@ export const SessionProvider = ({ children }: { children: React.ReactNode }) => 
       isLoading: sessionQuery.isLoading,
       canAccess: (moduleKey, action = 'view') => {
         if (systemRole === 'APP_ADMIN') {
-          if (SYSTEM_SCOPED_MODULES.has(moduleKey) || moduleKey === 'GOUS') {
-            return ROLE_PERMISSIONS.APP_ADMIN[moduleKey]?.includes(action) ?? false;
-          }
-          if (role && ROLE_PERMISSIONS[role]?.[moduleKey]?.includes(action)) {
-            return true;
-          }
-          return ROLE_PERMISSIONS.APP_ADMIN[moduleKey]?.includes(action) ?? false;
+          return true;
         }
 
-        if (GROUP_SCOPED_MODULES.has(moduleKey)) {
-          if (!role || role === 'APP_ADMIN') {
-            return false;
-          }
-          return ROLE_PERMISSIONS[role]?.[moduleKey]?.includes(action) ?? false;
+        if (moduleKey === 'ADMIN') {
+          return false;
         }
 
         if (!role) {

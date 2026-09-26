@@ -1,5 +1,4 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, Index } from 'typeorm';
-import { RolePermission } from './role-permission.entity';
 import { GroupUser } from './group-user.entity';
 import { Invite } from './invite.entity';
 
@@ -8,7 +7,7 @@ export enum RoleScope {
   GROUP = 'GROUP',
 }
 
-@Entity('sm_roles')
+@Entity('sws_roles')
 @Index(['code'], { unique: true })
 export class Role {
   @PrimaryGeneratedColumn('uuid')
@@ -32,9 +31,6 @@ export class Role {
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
-
-  @OneToMany(() => RolePermission, (rolePermission) => rolePermission.role)
-  rolePermissions: RolePermission[];
 
   @OneToMany(() => GroupUser, (groupUser) => groupUser.role)
   members: GroupUser[];

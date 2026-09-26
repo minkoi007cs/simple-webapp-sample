@@ -8,11 +8,9 @@ import {
   Settings,
   LogOut,
   X,
-  CalendarDays,
   ShieldCheck,
   Plus,
   Users,
-  FolderArchive,
   Tags,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
@@ -22,11 +20,9 @@ import { getGroupRoleDescription, APP_ADMIN_DESCRIPTION } from '../../utils/role
 const navigation = [
   { name: 'Hướng dẫn bắt đầu', href: '/', icon: Rocket, moduleKey: null, badge: 'Start Here' },
   { name: 'Tổng quan', href: '/dashboard', icon: LayoutDashboard, moduleKey: 'DASHBOARD' as const },
-  { name: 'Quản lý Mẫu (Samples)', href: '/samples', icon: Package, moduleKey: 'ASSET' as const },
+  { name: 'Quản lý Mẫu (Samples)', href: '/samples', icon: Package, moduleKey: 'SAMPLE' as const },
   { name: 'Phân loại', href: '/categories', icon: Tags, moduleKey: 'CATEGORY' as const },
-  { name: 'Tài liệu', href: '/documents', icon: FolderArchive, moduleKey: 'DOCUMENT' as const },
   { name: 'Thành viên', href: '/members', icon: Users, moduleKey: 'USER' as const },
-  { name: 'Lịch trình', href: '/calendar', icon: CalendarDays, moduleKey: 'CALENDAR' as const },
   { name: 'Quản trị hệ thống', href: '/admin', icon: ShieldCheck, moduleKey: 'ADMIN' as const },
   { name: 'Cài đặt', href: '/settings', icon: Settings, moduleKey: null },
 ];
@@ -161,7 +157,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
         destroyOnClose
       >
         <p className="text-xs text-muted-foreground mb-4">
-          Tạo nhóm làm việc mới để quản lý danh mục mẫu, tài liệu và thành viên độc lập.
+          Tạo nhóm làm việc mới để quản lý danh mục mẫu và thành viên độc lập.
         </p>
         <Form form={form} layout="vertical" onFinish={handleCreateGroup}>
           <Form.Item

@@ -144,15 +144,6 @@ export const MemberList = () => {
             sorter: (a: User, b: User) => (a.fullName || a.email || '').localeCompare(b.fullName || b.email || ''),
         },
         {
-            title: 'Biệt danh AI',
-            dataIndex: 'otherNames',
-            key: 'otherNames',
-            render: (text: string) => (
-                <span className="text-muted-foreground italic text-sm">{text || '-'}</span>
-            ),
-            sorter: (a: User, b: User) => (a.otherNames || '').localeCompare(b.otherNames || ''),
-        },
-        {
             title: 'Vai trò',
             dataIndex: 'role',
             key: 'role',
@@ -322,13 +313,6 @@ export const MemberList = () => {
                         rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
                     >
                         <Input prefix={<Users size={16} className="text-muted-foreground mr-2" />} />
-                    </Form.Item>
-                    <Form.Item
-                        name="otherNames"
-                        label="Biệt danh / Tên gọi khác (cho AI)"
-                        extra="Các tên cách nhau bởi dấu phẩy. Ví dụ: Anh Ba, Khoi..."
-                    >
-                        <Input placeholder="Tên cho AI nhận diện..." />
                     </Form.Item>
                 </Form>
             </Modal>

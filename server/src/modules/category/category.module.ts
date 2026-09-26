@@ -3,12 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CategoryService } from './category.service';
 import { CategoryController } from './category.controller';
 import { Category } from '../../common/entities/category.entity';
-import { PermissionModule } from '../permission/permission.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Category]),
-    PermissionModule,
   ],
   controllers: [CategoryController],
   providers: [CategoryService],

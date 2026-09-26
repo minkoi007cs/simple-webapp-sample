@@ -48,7 +48,6 @@ export class AdminService {
     }));
   }
 
-  // Compatibility alias
   async findAllFamilies() {
     return this.findAllGroups();
   }
@@ -71,7 +70,7 @@ export class AdminService {
       systemRole: user.systemRole,
       isActive: user.isActive,
       lastActiveGroupId: user.lastActiveGroupId,
-      lastActiveFamilyId: user.lastActiveGroupId, // Compatibility
+      lastActiveFamilyId: user.lastActiveGroupId,
       memberships: memberships
         .filter((membership) => membership.userId === user.id)
         .map((membership) => ({
@@ -90,7 +89,6 @@ export class AdminService {
     return this.groupRepository.findOne({ where: { id } });
   }
 
-  // Alias
   async updateFamilyStatus(id: string, status: GroupStatus) {
     return this.updateGroupStatus(id, status);
   }
@@ -110,7 +108,6 @@ export class AdminService {
     return this.groupRepository.findOne({ where: { id } });
   }
 
-  // Alias
   async updateFamily(id: string, data: { name?: string }) {
     return this.updateGroup(id, data);
   }
@@ -133,12 +130,18 @@ export class AdminService {
       await this.groupService.ensureGroupKeepsAdmin(groupId);
     }
 
-    const role = await this.roleRepository.findOne({
+    let role = await this.roleRepository.findOne({
       where: { code: roleCode },
     });
 
     if (!role) {
-      throw new NotFoundException(`Role ${roleCode} not found`);
+      role = await this.roleRepository.save(
+        this.roleRepository.create({
+          code: roleCode,
+          name: roleCode,
+          isTemplate: true,
+        }),
+      );
     }
 
     membership.roleId = role.id;
@@ -158,7 +161,6 @@ export class AdminService {
     };
   }
 
-  // Alias
   async updateFamilyMemberRole(groupId: string, userId: string, roleCode: UserRole) {
     return this.updateGroupMemberRole(groupId, userId, roleCode);
   }
@@ -218,11 +220,17 @@ export class AdminService {
       throw new NotFoundException('Không tìm thấy người dùng');
     }
 
-    const groupAdminRole = await this.roleRepository.findOne({
+    let groupAdminRole = await this.roleRepository.findOne({
       where: { code: UserRole.GROUP_ADMIN },
     });
     if (!groupAdminRole) {
-      throw new NotFoundException('Chưa cấu hình vai trò GROUP_ADMIN');
+      groupAdminRole = await this.roleRepository.save(
+        this.roleRepository.create({
+          code: UserRole.GROUP_ADMIN,
+          name: UserRole.GROUP_ADMIN,
+          isTemplate: true,
+        }),
+      );
     }
 
     const group = await this.groupRepository.save(
@@ -249,7 +257,6 @@ export class AdminService {
     return this.findAllGroups();
   }
 
-  // Alias
   async createFamilyByAdmin(name: string, adminUserId: string) {
     return this.createGroupByAdmin(name, adminUserId);
   }
@@ -265,8 +272,16 @@ export class AdminService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
 
-    const role = await this.roleRepository.findOne({ where: { code: roleCode } });
-    if (!role) throw new NotFoundException(`Role ${roleCode} not found`);
+    let role = await this.roleRepository.findOne({ where: { code: roleCode } });
+    if (!role) {
+      role = await this.roleRepository.save(
+        this.roleRepository.create({
+          code: roleCode,
+          name: roleCode,
+          isTemplate: true,
+        }),
+      );
+    }
 
     let membership = await this.groupUserRepository.findOne({
       where: { groupId, userId },
@@ -295,7 +310,6 @@ export class AdminService {
     return this.findAllGroups();
   }
 
-  // Alias
   async addMemberToFamily(groupId: string, userId: string, roleCode: UserRole) {
     return this.addMemberToGroup(groupId, userId, roleCode);
   }
@@ -324,7 +338,6 @@ export class AdminService {
     return this.findAllGroups();
   }
 
-  // Alias
   async removeMemberFromFamily(groupId: string, userId: string) {
     return this.removeMemberFromGroup(groupId, userId);
   }
@@ -346,19 +359,16 @@ export class AdminService {
     }
 
     await this.groupRepository.manager.transaction(async (trx) => {
-      await trx.query(`DELETE FROM invites WHERE "groupId" = $1 OR "familyId" = $1`, [groupId]).catch(() => {});
-      await trx.query(`DELETE FROM group_users WHERE "groupId" = $1`, [groupId]).catch(() => {});
-      await trx.query(`DELETE FROM samples WHERE "groupId" = $1`, [groupId]).catch(() => {});
-      await trx.query(`DELETE FROM calendar_events WHERE "groupId" = $1 OR "familyId" = $1`, [groupId]).catch(() => {});
-      await trx.query(`DELETE FROM categories WHERE "groupId" = $1 OR "familyId" = $1`, [groupId]).catch(() => {});
-      await trx.query(`DELETE FROM documents WHERE "groupId" = $1 OR "familyId" = $1`, [groupId]).catch(() => {});
+      await trx.query(`DELETE FROM sws_invites WHERE "groupId" = $1`, [groupId]).catch(() => {});
+      await trx.query(`DELETE FROM sws_group_users WHERE "groupId" = $1`, [groupId]).catch(() => {});
+      await trx.query(`DELETE FROM sws_samples WHERE "groupId" = $1`, [groupId]).catch(() => {});
+      await trx.query(`DELETE FROM sws_categories WHERE "groupId" = $1`, [groupId]).catch(() => {});
       await trx.delete(Group, { id: groupId });
     });
 
     return this.findAllGroups();
   }
 
-  // Alias
   async deleteFamily(groupId: string) {
     return this.deleteGroup(groupId);
   }

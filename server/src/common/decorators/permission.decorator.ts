@@ -1,18 +1,29 @@
 import { SetMetadata } from '@nestjs/common';
 
+export enum AppModule {
+  ADMIN = 'admin',
+  GROUP = 'group',
+  USER = 'user',
+  DASHBOARD = 'dashboard',
+  CATEGORY = 'category',
+  SAMPLE = 'sample',
+}
+
+export enum PermissionAction {
+  VIEW = 'view',
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+}
+
 export const PERMISSION_CHECK_KEY = 'permission_check';
 
 export interface PermissionCheck {
-  moduleId: string;
-  action: 'view' | 'add' | 'edit' | 'delete' | 'create' | 'update';
+  moduleId: AppModule | string;
+  action: PermissionAction | string;
 }
 
-export const CheckPermission = (
-  moduleId: string,
-  action: 'view' | 'add' | 'edit' | 'delete' | 'create' | 'update',
-) => SetMetadata(PERMISSION_CHECK_KEY, { moduleId, action });
-
 export const RequirePermission = (
-  moduleId: string,
-  action: 'view' | 'add' | 'edit' | 'delete' | 'create' | 'update' | string,
+  moduleId: AppModule | string,
+  action: PermissionAction | string,
 ) => SetMetadata(PERMISSION_CHECK_KEY, { moduleId, action });

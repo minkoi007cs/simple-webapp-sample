@@ -15,8 +15,7 @@ import { GroupStatus } from '../../common/entities/group.entity';
 import { SystemRole, UserRole } from '../../common/entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionGuard } from '../../common/guards/permission.guard';
-import { RequirePermission } from '../../common/decorators/permission.decorator';
-import { AppModule, PermissionAction } from '../../common/entities/permission.entity';
+import { RequirePermission, AppModule, PermissionAction } from '../../common/decorators/permission.decorator';
 
 @ApiTags('Admin')
 @ApiBearerAuth()

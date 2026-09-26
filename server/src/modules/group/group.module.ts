@@ -5,12 +5,11 @@ import { GroupController } from './group.controller';
 import { Group } from '../../common/entities/group.entity';
 import { GroupUser } from '../../common/entities/group-user.entity';
 import { User } from '../../common/entities/user.entity';
-import { PermissionModule } from '../permission/permission.module';
+import { Role } from '../../common/entities/role.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Group, GroupUser, User]),
-    PermissionModule,
+    TypeOrmModule.forFeature([Group, GroupUser, User, Role]),
   ],
   controllers: [GroupController],
   providers: [GroupService],

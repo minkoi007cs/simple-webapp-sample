@@ -12,16 +12,8 @@ import { UserModule } from './modules/user/user.module';
 import { GroupModule } from './modules/group/group.module';
 import { SampleModule } from './modules/sample/sample.module';
 import { CategoryModule } from './modules/category/category.module';
-import { NotificationModule } from './modules/notification/notification.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AdminModule } from './modules/admin/admin.module';
-import { PermissionModule } from './modules/permission/permission.module';
-import { FileModule } from './modules/file/file.module';
-import { ScheduleModule } from '@nestjs/schedule';
-import { CalendarModule } from './modules/calendar/calendar.module';
-import { NaturalInputModule } from './modules/natural-input/natural-input.module';
-import { GoUsModule } from './modules/gous/gous.module';
-import { DocumentModule } from './modules/document/document.module';
 
 @Module({
   imports: [
@@ -57,7 +49,7 @@ import { DocumentModule } from './modules/document/document.module';
             path.join(__dirname, '../migrations/*.js'),
           ],
           ssl: {
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
           },
         };
       },
@@ -93,16 +85,8 @@ import { DocumentModule } from './modules/document/document.module';
     GroupModule,
     SampleModule,
     CategoryModule,
-    NotificationModule,
     DashboardModule,
     AdminModule,
-    PermissionModule,
-    FileModule,
-    CalendarModule,
-    NaturalInputModule,
-    GoUsModule,
-    DocumentModule,
-    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -7,36 +7,13 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSION_CHECK_KEY, PermissionCheck } from '../decorators/permission.decorator';
-import { PermissionService } from '../../modules/permission/permission.service';
-import { AppModule } from '../entities/permission.entity';
 import { SystemRole, UserRole } from '../entities/user.entity';
-
-const APP_ADMIN_DENIED_MODULES = new Set<AppModule>([
-  AppModule.DASHBOARD,
-  AppModule.CATEGORY,
-  AppModule.CALENDAR,
-  AppModule.SAMPLE,
-]);
-
-const GROUP_SCOPED_MODULES = new Set<AppModule>([
-  AppModule.GROUP,
-  AppModule.USER,
-  AppModule.DASHBOARD,
-  AppModule.CATEGORY,
-  AppModule.CALENDAR,
-  AppModule.SAMPLE,
-  AppModule.DOCUMENT,
-  AppModule.GOUS,
-]);
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
   private readonly logger = new Logger(PermissionGuard.name);
 
-  constructor(
-    private reflector: Reflector,
-    private permissionService: PermissionService,
-  ) {}
+  constructor(private reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const check = this.reflector.getAllAndOverride<PermissionCheck>(
@@ -54,36 +31,45 @@ export class PermissionGuard implements CanActivate {
       return false;
     }
 
-    const normalized = this.permissionService.normalizePermission(check.moduleId, check.action);
+    const moduleKey = String(check.moduleId).toLowerCase();
+    const action = String(check.action).toLowerCase();
 
+    // 1. Quản trị hệ thống (APP_ADMIN)
     if (user.systemRole === SystemRole.APP_ADMIN) {
-      if (user.role && GROUP_SCOPED_MODULES.has(normalized.moduleKey)) {
-        const allowedInGroupContext = await this.permissionService.hasPermission(
-          user.role,
-          normalized.moduleKey,
-          normalized.action,
-        );
-        if (!allowedInGroupContext) {
-          throw new ForbiddenException(`You do not have ${normalized.action} permission for ${normalized.moduleKey}`);
-        }
+      return true;
+    }
+
+    // 2. Không cho phép user thường truy cập module admin
+    if (moduleKey === 'admin') {
+      throw new ForbiddenException('Chỉ Quản trị viên hệ thống (APP_ADMIN) mới có quyền truy cập');
+    }
+
+    // 3. Quyền theo nhóm
+    if (!user.role) {
+      throw new ForbiddenException('Chưa chọn nhóm làm việc hoặc không có quyền');
+    }
+
+    const groupRole = user.role;
+
+    if (groupRole === UserRole.GROUP_ADMIN) {
+      return true;
+    }
+
+    if (groupRole === UserRole.MEMBER) {
+      if (action === 'view') {
         return true;
       }
-
-      if (APP_ADMIN_DENIED_MODULES.has(normalized.moduleKey)) {
-        throw new ForbiddenException('APP_ADMIN cannot access group data directly');
+      if (moduleKey === 'sample') {
+        return true;
       }
-      return this.permissionService.hasPermission(UserRole.APP_ADMIN, normalized.moduleKey, normalized.action);
+      if (action === 'create' || action === 'update' || action === 'delete') {
+        if (moduleKey === 'category' || moduleKey === 'user' || moduleKey === 'group') {
+          throw new ForbiddenException('Chỉ Quản trị viên nhóm (GROUP_ADMIN) mới có quyền thực hiện thao tác này');
+        }
+      }
+      return true;
     }
 
-    if (!user.role) {
-      throw new ForbiddenException('No active group role found for this request');
-    }
-
-    const allowed = await this.permissionService.hasPermission(user.role, normalized.moduleKey, normalized.action);
-    if (!allowed) {
-      throw new ForbiddenException(`You do not have ${normalized.action} permission for ${normalized.moduleKey}`);
-    }
-
-    return true;
+    return false;
   }
 }

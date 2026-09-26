@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Group, GroupStatus } from '../../common/entities/group.entity';
 import { GroupUser, GroupUserStatus } from '../../common/entities/group-user.entity';
 import { User, UserRole } from '../../common/entities/user.entity';
-import { PermissionService } from '../permission/permission.service';
+import { Role } from '../../common/entities/role.entity';
 
 @Injectable()
 export class GroupService {
@@ -15,11 +15,26 @@ export class GroupService {
     private groupUserRepository: Repository<GroupUser>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    private permissionService: PermissionService,
+    @InjectRepository(Role)
+    private roleRepository: Repository<Role>,
   ) {}
 
+  private async getRole(roleCode: UserRole): Promise<Role> {
+    let role = await this.roleRepository.findOne({ where: { code: roleCode } });
+    if (!role) {
+      role = await this.roleRepository.save(
+        this.roleRepository.create({
+          code: roleCode,
+          name: roleCode,
+          isTemplate: true,
+        }),
+      );
+    }
+    return role;
+  }
+
   async create(userId: string, data: { name: string; description?: string }) {
-    const groupAdminRole = await this.permissionService.getRoleByCode(UserRole.GROUP_ADMIN);
+    const groupAdminRole = await this.getRole(UserRole.GROUP_ADMIN);
 
     const group = await this.groupRepository.save(
       this.groupRepository.create({
@@ -69,7 +84,7 @@ export class GroupService {
   }
 
   async ensureGroupKeepsAdmin(groupId: string) {
-    const adminRole = await this.permissionService.getRoleByCode(UserRole.GROUP_ADMIN);
+    const adminRole = await this.getRole(UserRole.GROUP_ADMIN);
     const activeAdmins = await this.groupUserRepository.count({
       where: {
         groupId,
@@ -83,11 +98,9 @@ export class GroupService {
     }
   }
 
-  // Backward-compat alias
   async ensureFamilyKeepsAdmin(groupId: string) {
     return this.ensureGroupKeepsAdmin(groupId);
   }
 }
 
-// Export compatibility
 export { GroupService as FamilyService };

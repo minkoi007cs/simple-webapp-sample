@@ -3,7 +3,6 @@ import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConfigProvider, theme as antTheme } from 'antd';
 import { MainLayout } from './components/layout/MainLayout';
-import { GoUsLayout } from './components/layout/GoUsLayout';
 import { AuthGuard } from './components/auth/AuthGuard';
 import { SessionProvider, useSession } from './components/auth/SessionProvider';
 import { ThemeProvider, useThemeMode } from './components/theme/ThemeProvider';
@@ -17,10 +16,7 @@ const Login = lazy(() => import('./pages/Login').then((module) => ({ default: mo
 const LoginSuccess = lazy(() => import('./pages/LoginSuccess').then((module) => ({ default: module.LoginSuccess })));
 const AcceptInvite = lazy(() => import('./pages/AcceptInvite').then((module) => ({ default: module.AcceptInvite })));
 const Settings = lazy(() => import('./pages/Settings').then((module) => ({ default: module.Settings })));
-const CalendarPage = lazy(() => import('./pages/CalendarPage').then((module) => ({ default: module.CalendarPage })));
 const AdminPanel = lazy(() => import('./pages/AdminPanel').then((module) => ({ default: module.AdminPanel })));
-const GoUsPortal = lazy(() => import('./pages/GoUsPortal').then((module) => ({ default: module.GoUsPortal })));
-const Documents = lazy(() => import('./pages/Documents').then((module) => ({ default: module.Documents })));
 const SetupGuide = lazy(() => import('./pages/SetupGuide').then((module) => ({ default: module.SetupGuide })));
 
 const queryClient = new QueryClient({
@@ -97,24 +93,17 @@ function AppShell() {
             <Route path="/accept-invite" element={<AcceptInvite />} />
 
             <Route element={<AuthGuard />}>
-              <Route path="/gous" element={<GoUsLayout />}>
-                <Route index element={<ProtectedPage moduleKey="GOUS"><GoUsPortal /></ProtectedPage>} />
-              </Route>
-
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<HomePage />} />
                 <Route path="guide" element={<SetupGuide />} />
                 <Route path="dashboard" element={<ProtectedPage moduleKey="DASHBOARD"><Dashboard /></ProtectedPage>} />
-                <Route path="samples" element={<ProtectedPage moduleKey="ASSET"><SampleList /></ProtectedPage>} />
+                <Route path="samples" element={<ProtectedPage moduleKey="SAMPLE"><SampleList /></ProtectedPage>} />
                 <Route path="assets" element={<Navigate to="/samples" replace />} />
-                <Route path="maintenance" element={<Navigate to="/samples" replace />} />
-                <Route path="expenses" element={<Navigate to="/samples" replace />} />
-                <Route path="documents" element={<ProtectedPage moduleKey="DOCUMENT"><Documents /></ProtectedPage>} />
                 <Route path="categories" element={<ProtectedPage moduleKey="CATEGORY"><CategoryList /></ProtectedPage>} />
                 <Route path="members" element={<ProtectedPage moduleKey="USER"><MemberList /></ProtectedPage>} />
-                <Route path="calendar" element={<ProtectedPage moduleKey="CALENDAR"><CalendarPage /></ProtectedPage>} />
                 <Route path="admin" element={<ProtectedPage moduleKey="ADMIN"><AdminPanel /></ProtectedPage>} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Route>
           </Routes>
