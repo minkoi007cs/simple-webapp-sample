@@ -7,13 +7,22 @@ let cachedApp: INestApplication | null = null;
 let bootstrapPromise: Promise<INestApplication> | null = null;
 
 function loadAppModule() {
-  try {
-    const { AppModule } = require('../server/dist/src/app.module');
-    if (AppModule) return AppModule;
-  } catch (err) {
-    console.warn('Could not load compiled AppModule from server/dist, falling back to source:', err);
+  const candidates = [
+    '../server/dist/app.module',
+    '../server/dist/src/app.module',
+    '../../server/dist/app.module',
+    './server/dist/app.module',
+    '../server/src/app.module',
+  ];
+  for (const p of candidates) {
+    try {
+      const mod = require(p);
+      if (mod?.AppModule) return mod.AppModule;
+    } catch {
+      // try next
+    }
   }
-  const { AppModule } = require('../server/src/app.module');
+  const { AppModule } = require('../server/dist/app.module');
   return AppModule;
 }
 
