@@ -24,13 +24,20 @@ export class UserService {
   ) {}
 
   async findAll(groupId: string, query: Record<string, unknown> = {}) {
-    const memberships = await this.groupUserRepository.find({
-      where: { groupId, status: GroupUserStatus.ACTIVE },
-      relations: ['user', 'role'],
-      order: { createdAt: 'ASC' },
-    });
+    const [memberships, pendingInvites] = await Promise.all([
+      this.groupUserRepository.find({
+        where: { groupId, status: GroupUserStatus.ACTIVE },
+        relations: ['user', 'role'],
+        order: { createdAt: 'ASC' },
+      }),
+      this.inviteRepository.find({
+        where: { groupId, status: InviteStatus.PENDING },
+        relations: ['role'],
+        order: { expiresAt: 'DESC' },
+      }),
+    ]);
 
-    const mapped = memberships.map((membership) => ({
+    const mappedMembers = memberships.map((membership) => ({
       ...membership.user,
       role: membership.role?.code,
       status: membership.status,
@@ -38,6 +45,24 @@ export class UserService {
       groupId: membership.groupId,
       invitedByUserId: membership.invitedByUserId,
     }));
+
+    const activeEmails = new Set(mappedMembers.map((m) => m.email?.toLowerCase()));
+    const mappedInvites = pendingInvites
+      .filter((inv) => inv.expiresAt.getTime() >= Date.now() && !activeEmails.has(inv.email.toLowerCase()))
+      .map((inv) => ({
+        id: inv.id,
+        email: inv.email,
+        fullName: inv.email.split('@')[0],
+        avatarUrl: null,
+        role: inv.role?.code || 'MEMBER',
+        status: 'INVITED',
+        membershipId: inv.id,
+        groupId: inv.groupId,
+        invitedByUserId: inv.invitedByUserId,
+        createdAt: inv.expiresAt,
+      }));
+
+    const mapped = [...mappedMembers, ...mappedInvites];
 
     const rawPage = query.page;
     const wantsPage = rawPage !== undefined && rawPage !== null && rawPage !== '';
@@ -171,8 +196,8 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('Không tìm thấy người dùng');
     }
-    if (data.fullName !== undefined) user.fullName = data.fullName;
-    if (data.otherNames !== undefined) user.otherNames = data.otherNames;
+    if (data.fullName !== undefined) user.fullName = data.fullName.trim();
+    if (data.otherNames !== undefined) user.otherNames = data.otherNames ? data.otherNames.trim() : '';
     return this.userRepository.save(user);
   }
 
